@@ -1,0 +1,3566 @@
+/* Browser Identification - (c) 2008, Jan Wolter - all rights reserved */
+var browserEngine, browserVersion, browserVersionString, browserOS;
+function browserType(test)
+{
+var ua= (test || navigator.userAgent).toLowerCase();
+var m;
+if (ua.search(/android/) >= 0)
+browserOS= 'Android';
+else if (ua.search(/windows/) >= 0)
+browserOS= 'Win';
+else if (ua.search(/macintosh/) >= 0)
+browserOS= 'Mac';
+else if (ua.search(/(linux|x11)/) >= 0)
+browserOS= 'Unix';
+else if (ua.search(/win/) >= 0)
+browserOS= 'Win';
+else if (ua.search(/mac/) >= 0)
+browserOS= 'Mac';
+else if (ua.search(/(bsd|sunos|unix)/) >= 0)
+browserOS= 'Unix';
+else
+browserOS= 'Unknown';
+if (m= ua.match(/applewebkit\/([0-9.]+)/))
+browserEngine= 'WebKit';
+else if ((m= ua.match(/khtml\/([0-9.]+)/)) ||
+(m= ua.match(/konqueror\/([0-9.]+)/)))
+browserEngine= 'KHTML';
+else if (m= ua.match(/opera[\/ ]([0-9.]+)/))
+browserEngine= 'Presto';
+else if (m= ua.match(/icab[\/ ]([0-9.]+)/))
+browserEngine= 'iCab';
+else if (m= ua.match(/msie[\/ ]([0-9.b]+)/))
+browserEngine= (browserOS == 'Mac') ? 'Tasman' : 'Trident';
+else if (ua.search(/gecko\/\d/) >= 0 &&
+(m= ua.match(/rv:([0-9.b]+)/)))
+browserEngine= 'Gecko';
+else if (m= ua.match(/mozilla\/([0-9.]+)/))
+browserEngine= 'Netscape';
+else
+browserEngine= 'Unknown';
+if (m)
+browserVersionString= m[1];
+else
+browserVersionString= '0';
+browserVersion= parseFloat(browserVersionString);
+}
+var operaSeven= false, operaEight= false, trustMouse= false, nongreedy= true;
+var useFSA= true;
+function initBrowser()
+{
+browserType();
+if (browserEngine == 'Presto')
+{
+operaSeven= (browserVersion < 8);
+operaEight= (browserVersion < 9.10);
+}
+trustMouse= ((browserEngine == 'WebKit' && browserOS != 'Unix') ||
+(browserEngine == 'Gecko' &&
+(browserOS == 'Mac' || browserVersion >= 1.7)) ||
+(browserEngine == 'Presto' && browserVersion >= 9) );
+try { nongreedy= (("abb".match(/ab*?/))[0] == 'a'); }
+catch (e) {nongreedy= false};
+useFSA= ((browserEngine == 'Gecko' && browserVersion >= 1.9) ||
+(browserEngine == 'WebKit' && browserVersion >= 525 &&
+browserVersion < 534) ||
+browserEngine == 'Presto');
+}
+function warnBrowser()
+{
+var bad;
+var noajax= 'They do not support the XMLHttpRequest feature, and '+
+'will not be able to save games and ratings.';
+var other;
+document.write('<noscript class="error"><strong>Warning:</strong> '+
+'Javascript is not enabled in your browser. '+
+'Javascript is required to be able to view and ' +
+'solve puzzles on this site.</noscript>\n');
+switch (browserEngine)
+{
+case 'Trident':
+if (browserVersion < 5)
+bad= 'Internet Explorer versions prior to version 5.0';
+break;
+case 'Tasman':
+bad= 'Macintosh versions of Internet Explorer';
+other= 'They are also slow, buggy, and prone to crashing.';
+break;
+case 'Gecko':
+if (browserVersion < 1)
+bad= 'Mozilla browsers built on Gecko versions before 1.0';
+break;
+case 'Presto':
+if (browserVersion < 9.2)
+{
+if (browserVersion < 8)
+bad= 'Opera browser versions before 8.0';
+else
+{
+bad= 'Opera browsers version before 9.27';
+noajax= '';
+}
+other= 'Opera will sometimes crash on larger puzzles due '+
+'to bugs in its regular expression parsing.';
+}
+break;
+case 'WebKit':
+if (browserVersion < 312.8)
+bad= 'Safari browser versions before 1.2';
+break;
+case 'iCab':
+bad= 'iCab browser versions before 3.0';
+noajax= '';
+other= 'There are many areas in which iCab seems slightly flakey.';
+break;
+}
+if (bad)
+document.write('<div class="error"><strong>Warning:</strong>'+bad+
+' will not work correctly for this site. '+noajax+' '+other+
+'\nFor this site, we recommend using\n'+
+'Firefox (1.5 or later), '+
+'or Internet Explorer (not Mac versions). '+
+'For more information see our '+
+'<a href="browser.html">browser page</a>.<p></div>\n');
+}
+initBrowser();
+var winWidth= 0, winHeight= 0;
+if (window.innerWidth)
+{
+winWidth= window.innerWidth;
+winHeight= window.innerHeight;
+}
+else if (document.documentElement && document.documentElement.clientWidth)
+{
+winWidth= document.documentElement.clientWidth;
+winHeight= document.documentElement.clientHeight;
+}
+else if (document.body && document.body.clientWidth)
+{
+winWidth= document.body.clientWidth;
+winHeight= document.body.clientHeight;
+}
+if (!Array.prototype.push)
+{
+Array.prototype.push = function() {
+var n= this.length;
+for (var i= 0; i < arguments.length; i++)
+this[n + i] = arguments[i];
+return this.length;
+};
+}
+if (!Array.prototype.pop)
+{
+set.pop= function () {
+if (this.length <= 0) return  null;
+var v= this[this.length-1];
+this.length--;
+return v;
+};
+}
+function setEvent(elem, evnt, func)
+{
+if (document.addEventListener)
+elem.addEventListener(evnt, func, true);
+else
+elem.attachEvent('on'+evnt, func);
+}
+function dont(e)
+{
+if (!e) e= event;
+if (e.preventDefault)
+{
+e.preventDefault();
+e.stopPropagation();
+}
+else
+e.returnValue= false;
+return false;
+}
+/* Web Paint-by-Number - (c) 2008, Jan Wolter - all rights reserved */
+function getCookie(name)
+{
+var all= document.cookies;
+if (!all) return;
+var pos= all.indexOf(name+'=');
+if (pos < 0) return null;
+var start= pos + name.length+1;
+var end= all.indexOf(';',start);
+if (end < 0) end= all.length;
+return decodeURIComponent(all.substring(start,end));
+}
+function getArgs()
+{
+var args= new Object();
+var query= location.search.substring(1);
+var pairs= query.split("&");
+for (var i= 0; i < pairs.length; i++)
+{
+var pos= pairs[i].indexOf('=');
+if (pos == -1) continue;
+var argname= decodeURIComponent(pairs[i].substring(0,pos));
+args[argname]= decodeURIComponent(pairs[i].substring(pos+1));
+}
+return args;
+}
+var arg= getArgs();
+/* Web Paint-by-Number - (c) 2009, Jan Wolter - all rights reserved */
+var user= new Object();
+function startAuth(authfunc, async)
+{
+user.authfunc= authfunc;
+var csid= getCookie('sid');
+if (!arg.sid && !arg.lg && !csid)
+{
+user.status= 'Unknown';
+return;
+}
+user.status= 'Wait';
+var args= location.search.substring(1);
+if (args) args+= '&';
+args+= 'opt=play';
+if (!arg.sid && csid) args+= '&sid='+csid;
+HTTP('XMLuser.cgi', args, async, authResp);
+}
+function authResp(req)
+{
+var rstat;
+try {rstat= req.status} catch(e){rstat= 200;};
+if (rstat == 200)
+{
+user.status= getXML(req,'status');
+user.sid= getXML(req,'sid');
+user.username= getXML(req,'username');
+user.fullname= getXML(req,'fullname');
+user.amadm= getXML(req,'amadm') - 0;
+user.mayrule= getXML(req,'mayrule') - 0;
+user.opt= new Object();
+var optstr= getXML(req,'options');
+if (optstr)
+{
+var term= optstr.split('&');
+for (var i= 0; i < term.length; i++)
+{
+var a= term[i].split('=');
+user.opt[decodeURIComponent(a[0])]= decodeURIComponent(a[1]);
+}
+}
+user.saveopt= false;
+if (user.action) user.action();
+}
+}
+function checkAuth()
+{
+if (user.status == 'Wait')
+user.action= function() {doCheckAuth();};
+else
+doCheckAuth();
+}
+function doCheckAuth()
+{
+if (user.status == 'Expired')
+askLogin('Your login session has expired. Please log in',
+user.username);
+else if (user.status == 'Error')
+askLogin('Login incorrect.  Please log in.',
+user.username);
+else user.authfunc();
+}
+function requireAuth(auth)
+{
+if (user.status == 'Unknown')
+askLogin('Please log in.');
+else if (user.status != 'Ok')
+doCheckAuth();
+else
+user.authfunc();
+}
+var lbox;
+function askLogin(msg,oldname)
+{
+var w= 250;
+var m= 20;
+var p= 5;
+var b= 4;
+var l= (winWidth > 0) ? (winWidth - w - 2*(m+p+b))/2 : 60;
+lbox= document.createElement('DIV');
+lbox.style.position= 'absolute';
+lbox.style.left= l+'px';
+lbox.style.top= '90px';
+lbox.style.width= w+'px';
+lbox.style.height= '140px';
+lbox.style.marginLeft= m+'px';
+lbox.style.marginRight= m+'px';
+lbox.style.padding= p+'px';
+lbox.style.overflow= 'auto';
+lbox.style.borderWidth= b+'px';
+lbox.style.borderColor= 'gray';
+lbox.style.borderStyle= 'ridge';
+lbox.style.backgroundColor= '#eee';
+document.body.appendChild(lbox);
+lbox.style.textAlign= "center";
+var lg= (oldname ? ' value="'+qHTML(oldname)+'"' : '');
+lbox.innerHTML= '<form onsubmit="doLogin(); return false">'+
+qHTML(msg)+'<table><tr><td>Username:</td>'+
+'<td><input type="text" name="lg" size="12"' + lg + '></td></tr>' +
+'<tr><td>Password:</td><td><input type="password" name="ps" size="12">' +
+'</td></tr><tr><td></td><td>' +
+'<input type="submit" value="Login"></td></tr></table></form>';
+}
+function doLogin()
+{
+var lge= document.getElementsByName('lg')[0];
+var pse= document.getElementsByName('ps')[0];
+var lg= encodeURIComponent(lge.value);
+var ps= encodeURIComponent(pse.value);
+var os= user.sid ? '&oldsid='+encodeURIComponent(user.sid) : '';
+if (lbox)
+{
+document.body.removeChild(lbox);
+lbox= null;
+}
+HTTP('XMLuser.cgi', 'opt=play&lg='+lg+'&ps='+ps+os, 0, authResp);
+requireAuth();
+}
+var qhh= {'&':'&amp;', '>':'&gt;', '<':'&lt;', '"':'&quot;'};
+function qHTML(s)
+{
+return s.replace(/[&><"]/g, function (x) { return qhh[x]; });
+}
+/* Web Paint-by-Number - (c) 2008, Jan Wolter - all rights reserved */
+var btnstate= new Array(false,false,false);
+function btn(e)
+{
+var rc= new Object();
+var key= 0;
+if (e.shiftKey != null)
+{
+if (e.shiftKey)
+key= 2;
+else if (e.ctrlKey || e.altKey)
+key= 1;
+}
+else if (e.modifiers != null)
+{
+if ((e.modifiers & Event.SHIFT_MASK) != 0)
+key= 2;
+else if ((e.modifiers & (Event.CONTROL_MASK|Event.ALT_MASK)) != 0)
+key= 1;
+}
+if (e.which == null)
+/* IE case */
+bt= (e.button < 2) ? 0 :
+((e.button == 4) ? 1 : 2);
+else if (operaSeven)
+/* Opera 7 */
+bt= (e.which < 2) ? 0 :
+((e.which == 2) ? 2 : 1);
+else
+/* All others */
+bt= (e.which < 2) ? 0 :
+((e.which == 2) ? 1 : 2);
+rc.whichButton= ((bt + key) % 3);
+if (e.type == "mouseup")
+{
+if (trustMouse || btnstate[bt])
+{
+btnstate[bt]= false;
+rc.upDown= 2;
+}
+else
+rc.upDown= 3;
+}
+else if (e.type == "mousedown")
+{
+if (trustMouse || !btnstate[bt])
+{
+if (operaSeven)
+rc.upDown= (bt == 0) ? 1 : 3;
+else
+{
+btnstate[bt]= true;
+rc.upDown= 1;
+}
+}
+else
+rc.upDown= 0;
+}
+else if (operaEight && e.type == "dblclick")
+{
+btnstate[bt]= true;
+rc.upDown= 1;
+}
+else
+rc.upDown= 0;
+return rc
+}
+/**
+* XMLHttpRequest.js Copyright (C) 2011 Sergey Ilinsky (http://www.ilinsky.com)
+*
+* This work is free software; you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation; either version 2.1 of the License, or
+* (at your option) any later version.
+*
+* This work is distributed in the hope that it will be useful,
+* but without any warranty; without even the implied warranty of
+* merchantability or fitness for a particular purpose. See the
+* GNU Lesser General Public License for more details.
+*
+* You should have received a copy of the GNU Lesser General Public License
+* along with this library; if not, write to the Free Software Foundation, Inc.,
+* 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+*/
+(function () {
+var oXMLHttpRequest = window.XMLHttpRequest;
+var bGecko  = !!window.controllers;
+var bIE     = !!window.document.namespaces;
+var bIE7    = bIE && window.navigator.userAgent.match(/MSIE 7.0/);
+function fXMLHttpRequest() {
+this._object  = oXMLHttpRequest && !bIE7 ? new oXMLHttpRequest : new window.ActiveXObject("Microsoft.XMLHTTP");
+this._listeners = [];
+}
+function cXMLHttpRequest() {
+return new fXMLHttpRequest;
+}
+cXMLHttpRequest.prototype = fXMLHttpRequest.prototype;
+if (bGecko && oXMLHttpRequest.wrapped) {
+cXMLHttpRequest.wrapped = oXMLHttpRequest.wrapped;
+}
+cXMLHttpRequest.UNSENT            = 0;
+cXMLHttpRequest.OPENED            = 1;
+cXMLHttpRequest.HEADERS_RECEIVED  = 2;
+cXMLHttpRequest.LOADING           = 3;
+cXMLHttpRequest.DONE              = 4;
+cXMLHttpRequest.prototype.UNSENT            = cXMLHttpRequest.UNSENT;
+cXMLHttpRequest.prototype.OPENED            = cXMLHttpRequest.OPENED;
+cXMLHttpRequest.prototype.HEADERS_RECEIVED  = cXMLHttpRequest.HEADERS_RECEIVED;
+cXMLHttpRequest.prototype.LOADING           = cXMLHttpRequest.LOADING;
+cXMLHttpRequest.prototype.DONE              = cXMLHttpRequest.DONE;
+cXMLHttpRequest.prototype.readyState    = cXMLHttpRequest.UNSENT;
+cXMLHttpRequest.prototype.responseText  = '';
+cXMLHttpRequest.prototype.responseXML   = null;
+cXMLHttpRequest.prototype.status        = 0;
+cXMLHttpRequest.prototype.statusText    = '';
+cXMLHttpRequest.prototype.priority    = "NORMAL";
+cXMLHttpRequest.prototype.onreadystatechange  = null;
+cXMLHttpRequest.onreadystatechange  = null;
+cXMLHttpRequest.onopen              = null;
+cXMLHttpRequest.onsend              = null;
+cXMLHttpRequest.onabort             = null;
+cXMLHttpRequest.prototype.open  = function(sMethod, sUrl, bAsync, sUser, sPassword) {
+var sLowerCaseMethod = sMethod.toLowerCase();
+if (sLowerCaseMethod == "connect" || sLowerCaseMethod == "trace" || sLowerCaseMethod == "track") {
+throw new Error(18);
+}
+delete this._headers;
+if (arguments.length < 3) {
+bAsync  = true;
+}
+this._async   = bAsync;
+var oRequest  = this;
+var nState    = this.readyState;
+var fOnUnload = null;
+if (bIE && bAsync) {
+fOnUnload = function() {
+if (nState != cXMLHttpRequest.DONE) {
+fCleanTransport(oRequest);
+oRequest.abort();
+}
+};
+window.attachEvent("onunload", fOnUnload);
+}
+if (cXMLHttpRequest.onopen) {
+cXMLHttpRequest.onopen.apply(this, arguments);
+}
+if (arguments.length > 4) {
+this._object.open(sMethod, sUrl, bAsync, sUser, sPassword);
+} else if (arguments.length > 3) {
+this._object.open(sMethod, sUrl, bAsync, sUser);
+} else {
+this._object.open(sMethod, sUrl, bAsync);
+}
+this.readyState = cXMLHttpRequest.OPENED;
+fReadyStateChange(this);
+this._object.onreadystatechange = function() {
+if (bGecko && !bAsync) {
+return;
+}
+oRequest.readyState   = oRequest._object.readyState;
+fSynchronizeValues(oRequest);
+if (oRequest._aborted) {
+oRequest.readyState = cXMLHttpRequest.UNSENT;
+return;
+}
+if (oRequest.readyState == cXMLHttpRequest.DONE) {
+delete oRequest._data;
+/**
+* if (bAsync) {
+* 	fQueue_remove(oRequest);
+* }
+*/
+fCleanTransport(oRequest);
+/**
+*
+* if (!oRequest._object.getResponseHeader("Date")) {
+*
+* 	oRequest._cached  = oRequest._object;
+*
+*
+* 	cXMLHttpRequest.call(oRequest);
+*
+*
+* 	if (sUser) {
+* 		if (sPassword) {
+* 			oRequest._object.open(sMethod, sUrl, bAsync, sUser, sPassword);
+* 		} else {
+* 			oRequest._object.open(sMethod, sUrl, bAsync);
+* 		}
+*
+* 		oRequest._object.setRequestHeader("If-Modified-Since", oRequest._cached.getResponseHeader("Last-Modified") || new window.Date(0));
+*
+* 		if (oRequest._headers) {
+* 			for (var sHeader in oRequest._headers) {
+*
+* 				if (typeof oRequest._headers[sHeader] == "string") {
+* 					oRequest._object.setRequestHeader(sHeader, oRequest._headers[sHeader]);
+* 				}
+* 			}
+* 		}
+* 		oRequest._object.onreadystatechange = function() {
+*
+* 			oRequest.readyState   = oRequest._object.readyState;
+*
+* 			if (oRequest._aborted) {
+*
+* 				oRequest.readyState = cXMLHttpRequest.UNSENT;
+*
+*
+* 				return;
+* 			}
+*
+* 			if (oRequest.readyState == cXMLHttpRequest.DONE) {
+*
+* 				fCleanTransport(oRequest);
+*
+*
+* 				if (oRequest.status == 304) {
+* 					oRequest._object  = oRequest._cached;
+* 				}
+*
+*
+* 				delete oRequest._cached;
+*
+*
+* 				fSynchronizeValues(oRequest);
+*
+*
+* 				fReadyStateChange(oRequest);
+*
+*
+* 				if (bIE && bAsync) {
+* 					window.detachEvent("onunload", fOnUnload);
+* 				}
+*
+* 			}
+* 		};
+* 		oRequest._object.send(null);
+*
+*
+* 		return;
+* 	};
+*/
+if (bIE && bAsync) {
+window.detachEvent("onunload", fOnUnload);
+}
+if (nState != oRequest.readyState) {
+fReadyStateChange(oRequest);
+}
+nState  = oRequest.readyState;
+}
+};
+};
+cXMLHttpRequest.prototype.send = function(vData) {
+if (cXMLHttpRequest.onsend) {
+cXMLHttpRequest.onsend.apply(this, arguments);
+}
+if (!arguments.length) {
+vData = null;
+}
+if (vData && vData.nodeType) {
+vData = window.XMLSerializer ? new window.XMLSerializer().serializeToString(vData) : vData.xml;
+if (!this._headers["Content-Type"]) {
+this._object.setRequestHeader("Content-Type", "application/xml");
+}
+}
+this._data = vData;
+/**
+*
+* if (this._async) {
+* 	fQueue_add(this);
+* } else { */
+fXMLHttpRequest_send(this);
+/**
+* }
+*/
+};
+cXMLHttpRequest.prototype.abort = function() {
+if (cXMLHttpRequest.onabort) {
+cXMLHttpRequest.onabort.apply(this, arguments);
+}
+if (this.readyState > cXMLHttpRequest.UNSENT) {
+this._aborted = true;
+}
+this._object.abort();
+fCleanTransport(this);
+this.readyState = cXMLHttpRequest.UNSENT;
+delete this._data;
+/* if (this._async) {
+* 	fQueue_remove(this);
+* }
+*/
+};
+cXMLHttpRequest.prototype.getAllResponseHeaders = function() {
+return this._object.getAllResponseHeaders();
+};
+cXMLHttpRequest.prototype.getResponseHeader = function(sName) {
+return this._object.getResponseHeader(sName);
+};
+cXMLHttpRequest.prototype.setRequestHeader  = function(sName, sValue) {
+if (!this._headers) {
+this._headers = {};
+}
+this._headers[sName]  = sValue;
+return this._object.setRequestHeader(sName, sValue);
+};
+cXMLHttpRequest.prototype.addEventListener  = function(sName, fHandler, bUseCapture) {
+for (var nIndex = 0, oListener; oListener = this._listeners[nIndex]; nIndex++) {
+if (oListener[0] == sName && oListener[1] == fHandler && oListener[2] == bUseCapture) {
+return;
+}
+}
+this._listeners.push([sName, fHandler, bUseCapture]);
+};
+cXMLHttpRequest.prototype.removeEventListener = function(sName, fHandler, bUseCapture) {
+for (var nIndex = 0, oListener; oListener = this._listeners[nIndex]; nIndex++) {
+if (oListener[0] == sName && oListener[1] == fHandler && oListener[2] == bUseCapture) {
+break;
+}
+}
+if (oListener) {
+this._listeners.splice(nIndex, 1);
+}
+};
+cXMLHttpRequest.prototype.dispatchEvent = function(oEvent) {
+var oEventPseudo  = {
+'type':             oEvent.type,
+'target':           this,
+'currentTarget':    this,
+'eventPhase':       2,
+'bubbles':          oEvent.bubbles,
+'cancelable':       oEvent.cancelable,
+'timeStamp':        oEvent.timeStamp,
+'stopPropagation':  function() {},
+'preventDefault':   function() {},
+'initEvent':        function() {}
+};
+if (oEventPseudo.type == "readystatechange" && this.onreadystatechange) {
+(this.onreadystatechange.handleEvent || this.onreadystatechange).apply(this, [oEventPseudo]);
+}
+for (var nIndex = 0, oListener; oListener = this._listeners[nIndex]; nIndex++) {
+if (oListener[0] == oEventPseudo.type && !oListener[2]) {
+(oListener[1].handleEvent || oListener[1]).apply(this, [oEventPseudo]);
+}
+}
+};
+cXMLHttpRequest.prototype.toString  = function() {
+return '[' + "object" + ' ' + "XMLHttpRequest" + ']';
+};
+cXMLHttpRequest.toString  = function() {
+return '[' + "XMLHttpRequest" + ']';
+};
+/**
+*
+* var oQueuePending = {"CRITICAL":[],"HIGH":[],"NORMAL":[],"LOW":[],"LOWEST":[]},
+* aQueueRunning = [];
+* function fQueue_add(oRequest) {
+* 	oQueuePending[oRequest.priority in oQueuePending ? oRequest.priority : "NORMAL"].push(oRequest);
+*
+* 	setTimeout(fQueue_process);
+* };
+*
+* function fQueue_remove(oRequest) {
+* 	for (var nIndex = 0, bFound = false; nIndex < aQueueRunning.length; nIndex++)
+* 	if (bFound) {
+* 		aQueueRunning[nIndex - 1] = aQueueRunning[nIndex];
+* 	} else {
+* 		if (aQueueRunning[nIndex] == oRequest) {
+* 			bFound  = true;
+* 		}
+* }
+*
+* 	if (bFound) {
+* 		aQueueRunning.length--;
+* 	}
+*
+*
+*
+* 	setTimeout(fQueue_process);
+* };
+*
+* function fQueue_process() {
+* if (aQueueRunning.length < 6) {
+* for (var sPriority in oQueuePending) {
+* if (oQueuePending[sPriority].length) {
+* var oRequest  = oQueuePending[sPriority][0];
+* oQueuePending[sPriority]  = oQueuePending[sPriority].slice(1);
+*
+* aQueueRunning.push(oRequest);
+*
+* fXMLHttpRequest_send(oRequest);
+* break;
+* }
+* }
+* }
+* };
+*/
+function fXMLHttpRequest_send(oRequest) {
+oRequest._object.send(oRequest._data);
+if (bGecko && !oRequest._async) {
+oRequest.readyState = cXMLHttpRequest.OPENED;
+fSynchronizeValues(oRequest);
+while (oRequest.readyState < cXMLHttpRequest.DONE) {
+oRequest.readyState++;
+fReadyStateChange(oRequest);
+if (oRequest._aborted) {
+return;
+}
+}
+}
+}
+function fReadyStateChange(oRequest) {
+if (cXMLHttpRequest.onreadystatechange){
+cXMLHttpRequest.onreadystatechange.apply(oRequest);
+}
+oRequest.dispatchEvent({
+'type':       "readystatechange",
+'bubbles':    false,
+'cancelable': false,
+'timeStamp':  new Date + 0
+});
+}
+function fGetDocument(oRequest) {
+var oDocument = oRequest.responseXML;
+var sResponse = oRequest.responseText;
+if (bIE && sResponse && oDocument && !oDocument.documentElement && oRequest.getResponseHeader("Content-Type").match(/[^\/]+\/[^\+]+\+xml/)) {
+oDocument = new window.ActiveXObject("Microsoft.XMLDOM");
+oDocument.async       = false;
+oDocument.validateOnParse = false;
+oDocument.loadXML(sResponse);
+}
+if (oDocument){
+if ((bIE && oDocument.parseError && oDocument.parseError.errorCode != 0) || !oDocument.documentElement || (oDocument.documentElement && oDocument.documentElement.tagName == "parsererror")) {
+return null;
+}
+}
+return oDocument;
+}
+function fSynchronizeValues(oRequest) {
+try { oRequest.responseText = oRequest._object.responseText;  } catch (e) {}
+try { oRequest.responseXML  = fGetDocument(oRequest._object); } catch (e) {}
+try { oRequest.status       = oRequest._object.status;        } catch (e) {}
+try { oRequest.statusText   = oRequest._object.statusText;    } catch (e) {}
+}
+function fCleanTransport(oRequest) {
+oRequest._object.onreadystatechange = new window.Function;
+}
+if (!window.Function.prototype.apply) {
+window.Function.prototype.apply = function(oRequest, oArguments) {
+if (!oArguments) {
+oArguments  = [];
+}
+oRequest.__func = this;
+oRequest.__func(oArguments[0], oArguments[1], oArguments[2], oArguments[3], oArguments[4]);
+delete oRequest.__func;
+};
+}
+window.XMLHttpRequest = cXMLHttpRequest;
+})();
+/* Web Paint-by-Number - (c) 2009, Jan Wolter - all rights reserved */
+function HTTP(url, data, async, handler, extra1, extra2)
+{
+var req= new XMLHttpRequest();
+if (handler) req.onreadystatechange=
+function() { if (req.readyState == 4) handler(req, extra1, extra2) };
+req.open(data == null ? "GET" : "POST" , url, async);
+if (data != null)
+req.setRequestHeader('Content-Type',
+'application/x-www-form-urlencoded');
+req.send(data);
+return req;
+}
+function getXML(req,tag)
+{
+var t= req.responseXML.getElementsByTagName(tag);
+if (!t || t.length == 0) return null;
+var c= t[0].firstChild;
+if (!c) return null;
+var m= '';
+while (c)
+{
+m+= c.nodeValue;
+c= c.nextSibling;
+}
+return m;
+}
+function loadcode(source)
+{
+var head= document.getElementsByTagName('head')[0];
+var script= document.createElement('script');
+script.type= 'text/javascript';
+script.src= source;
+head.appendChild(script);
+}
+function HTTPlib(lib)
+{
+var req= HTTP(lib, '', false);
+if (req && req.status == 200)
+return req.responseText;
+document.write('Error:  Could not load '+lib);
+return null;
+}
+/* Web Paint-by-Number - (c) 2009, Jan Wolter - all rights reserved */
+var PBNpanel= new Object();
+function Panel(pbn)
+{
+this.pbn= pbn;
+this.menuon= false;
+if (pbn.opt.dots != 1)
+{
+Panel.btnColorImg[0]= 'x';
+Panel.btnColorImg[1]= 'w';
+}
+PBNpanel['panel'+pbn.suffix]= this;
+}
+Panel.btnFuncImg= ['none', 'rot', 'tor', null, null, 'drop', 'menu'];
+Panel.btnColorImg= ['w', 'dot', 'g', 'r', 'n', 'u'];
+Panel.prototype.potImage= function(n)
+{
+var f= Panel.btnFuncImg[this.pbn.btnfunc[n]];
+if (!f) f= Panel.btnColorImg[this.pbn.btncolor[n]];
+return 'img/bf_'+f+'.gif';
+}
+Panel.prototype.showPanel= function(parent)
+{
+var pan= this;
+var pbn= pan.pbn;
+var panelData= [
+['blank',	 null],
+['undo',	 function() {pbn.undo();}],
+['options',	 function() {pan.popOptions();}],
+['redo',	 function() {pbn.redo();}],
+['save',	 function() {pan.doSave();},	 'L'],
+['revert',	 function() {pan.doRevert();},	 'L'],
+['hint',	 function() {pbn.helper(1);}],
+['check',	 function() {pbn.check();}],
+['smaller',	 function() {pan.resize(-1);}],
+['bigger',	 function() {pan.resize(1);}],
+['clear',	 function() {pbn.clearBoard();}],
+['print',	 function() {pan.printBoard();}],
+['helper',	 function() {pbn.helper();},	 'A'],
+['edit',	 function() {pan.editBoard();},	 'A'],
+['vam_comments', function() {pan.popComment();}, 'L',  3],
+['view_comments',function() {pan.popComment();},'~L', 2],
+['big_helper',	 function() {pbn.helper();},	'R', 2],
+['big_helper',	 function() {pbn.helper();},	'~A', 2, 'H']
+];
+parent.style.position= 'relative';
+parent.style.width= '112px';
+var amlogged= (user && user.status == 'Ok');
+var amauthor= (amlogged &&
+(user.amadm || user.username == pbn.authid));
+var x= 0, y= 0, n=0;
+for (var i= 0; i < panelData.length; i++)
+{
+var d= panelData[i];
+if ((d[2] == 'L' && !amlogged) || (d[2] == '~L' && amlogged) ||
+(d[2] == 'A' && !amauthor) || (d[2] == '~A' && amauthor) ||
+(d[2] == 'R' && (amauthor || !user.mayrule)) ) continue;
+var btn= document.createElement('IMG');
+btn.id= d[0]+'_button'+pbn.suffix;
+btn.src= 'img/'+d[0]+'_button.png';
+btn.style.position= 'absolute';
+if (d[3] > 1 && x > 0) {x= 0; y+= 24;}
+btn.style.left= x+'px';
+btn.style.top= y+'px';
+if (d[3] == 2)
+{ x= 0; y+= 24; }
+else if (d[3] == 3)
+{ x= 0; y+= 38; }
+else
+{
+if (x == 0)
+x= 56;
+else
+{x= 0; y+= 24;}
+}
+if (d[4] == 'H') btn.style.visibility= 'hidden';
+if (d[1]) setEvent(btn,'click', d[1]);
+parent.appendChild(btn);
+n++;
+}
+pan.maxzoom= (PBNdraw == 'SVG' ? 100 : 3);
+pan.zoomButton()
+var bb= document.getElementById('blank_button'+pbn.suffix);
+var x= parseInt(bb.style.left) + 8;
+var y= parseInt(bb.style.top) + 6 + 'px';
+pan.ppimg= new Array(3);
+for (var i= 0; i < 3; i++)
+{
+var pot= document.createElement('IMG');
+pan.ppimg[i]= pot;
+pot.id= 'pot'+i;
+pot.src= pan.potImage(i);
+pot.style.position= 'absolute';
+pot.style.left= (x + i*14)+ 'px';
+pot.style.top= y;
+setEvent(pot, 'mousedown', function(e) {pan.cyclePot(e)});
+setEvent(pot, 'contextmenu', dont);
+parent.appendChild(pot);
+}
+var tipbox;
+if (pbn.opt.tip && (tipbox= document.getElementById('tip'+pbn.suffix)))
+{
+pan.tip= new Tip(tipbox);
+pan.tip.showTip();
+}
+}
+Panel.prototype.zoomButton= function()
+{
+var pbn= this.pbn;
+var btn= document.getElementById('smaller_button'+pbn.suffix);
+btn.src= 'img/'+(pbn.size <= 1 ? 'no_':'')+'smaller_button.png';
+btn= document.getElementById('bigger_button'+pbn.suffix);
+btn.src= 'img/'+(pbn.size >= this.maxzoom ? 'no_':'')+'bigger_button.png';
+}
+Panel.floop= [
+[1, 0],
+[2, 0],
+[4, 1],
+[4, 2],
+[4, 3],
+[4, 4],
+[4, 5],
+[3, 0],
+[5, 0],
+[6, 0] ];
+Panel.prototype.cyclePot= function(e)
+{
+if (!e) e= event;
+var b= btn(e);
+var target= e.target ? e.target : e.srcElement;
+var n= target.id.substring(3) - 0;
+var pbn= this.pbn;
+var i;
+var nfunc= Panel.floop.length;
+for (i= nfunc - 1;
+i > 0 &&
+(pbn.btnfunc[n] != Panel.floop[i][0] ||
+(pbn.btnfunc[n] == 4 &&
+pbn.btncolor[n] != Panel.floop[i][1]));
+i--) ;
+var inc= ((b.whichButton == 0) ? 1 : nfunc - 1);
+for (i= (i+inc)%nfunc;
+!pbn.usecolor[Panel.floop[i][1]] ||
+(n == 0 && Panel.floop[i][0] > 4); i= (i+inc)%nfunc) ;
+pbn.btnfunc[n]= Panel.floop[i][0];
+pbn.btncolor[n]= Panel.floop[i][1];
+this.ppimg[n].src= this.potImage(n);
+}
+Panel.prototype.resize= function(inc)
+{
+var pbn= this.pbn;
+if (pbn.size+inc < 1 || pbn.size+inc > this.maxzoom) return;
+pbn.status('Resizing...');
+setTimeout(function(){pbn.draw.doResize(inc);},100);
+}
+Panel.prototype.popComment= function()
+{
+var url= 'read.cgi?type=P&id='+this.pbn.id+'&pop=Y';
+if (user.sid != null) url+= '&sid='+user.sid;
+window.open(url, 'popcomm',
+'scrollbars=yes,resizable=yes,width=640,height=480');
+}
+Panel.prototype.popOptions= function()
+{
+this.resetbuttons= false;
+window.open('playopt.html?pbn='+this.pbn.suffix, 'popopt',
+'scrollbars=yes,resizable=yes,width=640,height=480');
+}
+Panel.prototype.editBoard= function()
+{
+var loc= 'edit.cgi?id='+this.pbn.id;
+if (user.sid != null) loc+= '&sid='+user.sid;
+window.location= loc;
+}
+Panel.prototype.printBoard= function()
+{
+var loc=
+'print.cgi/pbn'+this.pbn.id+'.pdf?id='+this.pbn.id;
+if (user.sid != null) loc+= '&sid='+user.sid;
+window.location= loc;
+}
+Panel.prototype.doSave= function()
+{
+if (this.pbn.save) this.pbn.save.saveGrid();
+}
+Panel.prototype.doRevert= function()
+{
+if (this.pbn.save) this.pbn.save.revert();
+}
+Panel.prototype.mn= function(e)
+{
+if (e)
+{
+if (!this.menu) this.makeMenu();
+if (this.menuon) return;
+this.menuon= true;
+if (typeof(e.pageX) == 'number')
+{
+this.menu.style.left= (e.pageX+1)+"px";
+this.menu.style.top= (e.pageY+1)+"px";
+}
+else
+{
+var d= (document.documentElement &&
+document.documentElement.clientHeight) ?
+document.documentElement : document.body;
+this.menu.style.left= (e.clientX+d.scrollLeft+1)+"px";
+this.menu.style.top= (e.clientY+d.scrollTop+1)+"px";
+}
+this.menu.style.visibility= "visible";
+}
+else
+{
+if (!this.menuon) return;
+this.menuon= false;
+this.menu.style.visibility= "hidden";
+}
+}
+Panel.prototype.menuHi= function(e)
+{
+if (!e) e= event;
+var target= e.target ? e.target : e.srcElement;
+var i= target.id.substr(6)-0;
+if (this.menulit > -1)
+{
+var oldsrc= this.menuimg[this.menulit].src;
+this.menuimg[this.menulit].src=
+oldsrc.substr(0,oldsrc.length-5)+"n.gif";
+}
+this.menulit= i;
+var oldsrc= this.menuimg[this.menulit].src;
+this.menuimg[this.menulit].src= oldsrc.substr(0,oldsrc.length-5)+"y.gif";
+}
+Panel.prototype.menuSel= function(e)
+{
+if (!e) e= event;
+dont(e);
+var target= e.target ? e.target : e.srcElement;
+var i= target.id.match(/menu([0-9]+)-/);
+if (!i) return;
+this.pbn.btncolor[0]= i[1] - 0;
+if (this.pbn.btnfunc[0] != 3) this.pbn.btnfunc[0]= 4;
+this.menuon= false;
+this.menu.style.visibility= 'hidden';
+this.ppimg[0].src= this.potImage(0);
+return true;
+}
+Panel.prototype.makeMenu= function()
+{
+var pnl= this;
+pnl.menu= document.createElement("DIV");
+pnl.menu.style.position= "absolute";
+pnl.menu.style.width= "16px";
+pnl.menu.style.visibility= "hidden";
+pnl.menu.onmousedown= dont;
+pnl.menu.oncontextmenu= dont;
+pnl.menulit= -1;
+pnl.menuimg= new Array();
+var nstate= 0;
+var j= 0;
+for (var i= 0; i < PBN.nclr+1; i++)
+if (pnl.pbn.usecolor[i])
+{
+nstate++;
+pnl.menuimg[j]= document.createElement("IMG");
+pnl.menuimg[j].src= "img/M"+Panel.btnColorImg[i]+"n.gif";
+pnl.menuimg[j].id= "menu"+i+'-'+j;
+pnl.menuimg[j].width= "16";
+pnl.menuimg[j].height= (j == 0) ? "16" : "15";
+pnl.menuimg[j].style.position= "absolute";
+pnl.menuimg[j].style.border_width= "0px";
+pnl.menuimg[j].style.left= "0px";
+pnl.menuimg[j].style.top= (j == 0) ? "0px" : ((15*j+1)+'px');
+setEvent(pnl.menuimg[j],'mouseover',function(e){pnl.menuHi(e);});
+pnl.menu.appendChild(pnl.menuimg[j]);
+j++;
+}
+pnl.menu.style.height= (15*nstate+1)+"px";
+document.body.appendChild(pnl.menu);
+}
+Panel.ae= function(p,t)
+{
+var e= document.createElement(t);
+p.appendChild(e);
+return e;
+}
+Panel.at= function(p,t)
+{
+var e= document.createTextNode(t);
+p.appendChild(e);
+}
+Panel.ao= function(sel, v, t, dflt)
+{
+sel.options[sel.options.length]= new Option(t, v+'', v==dflt, v==dflt);
+}
+Panel.select= function(sel, val)
+{
+for (var i= 0; i < sel.options.length; i++)
+if (sel.options[i].value == val)
+{
+sel.selectedIndex= i;
+return;
+}
+}
+Panel.prototype.logOpt= function(dflt,curruniq)
+{
+var sel= this.sellog;
+var ncolor= 1;
+for (var i= 2; i < PBN.nclr; i++)
+if (this.pbn.usecolor[i]) ncolor++;
+curruniq= Math.abs(curruniq);
+sel.options.length= 0;
+Panel.ao(sel, 0, 'please rate this puzzle', dflt);
+if (curruniq != 2)
+{
+Panel.ao(sel, 1, 'Trivially solvable', dflt);
+Panel.ao(sel, 2, 'Logically solvable with line '+
+(ncolor>2?'and color ':'')+'logic alone', dflt);
+Panel.ao(sel, 3, 'Logically solvable with moderate lookahead', dflt);
+Panel.ao(sel, 4, 'Logically solvable with deep lookahead', dflt);
+}
+Panel.ao(sel, 5, 'Solvable only with some guessing', dflt);
+Panel.ao(sel, 6, 'Solvable only with lots of guessing', dflt);
+if (user.mayrule)
+{
+d= 'DEFINITELY ';
+if (curruniq != 2)
+{
+Panel.ao(sel, -1, d+'trivially solvable', dflt);
+Panel.ao(sel, -2, d+'logically solvable with line '+
+(ncolor>2?'and color ':'')+'logic alone', dflt);
+Panel.ao(sel, -3, d+'logically solvable with moderate lookahead',
+dflt);
+Panel.ao(sel, -4, d+'logically solvable with deep lookahead',
+dflt);
+}
+Panel.ao(sel, -5, d+'solvable only with some guessing', dflt);
+Panel.ao(sel, -6, d+'solvable only with lots of guessing', dflt);
+}
+}
+Panel.prototype.showRate= function(parent)
+{
+var tr, td, sel, note, dflt, d;
+var panel= this;
+var pbn= panel.pbn;
+var form= Panel.ae(parent,'form');
+form.name= 'score'+pbn.suffix;
+var table= Panel.ae(form,'table');
+table.border= 0;
+var tbody= Panel.ae(table,'tbody');
+if (pbn.unique >= 0 || user.mayrule)
+{
+tr= Panel.ae(tbody,'tr');
+td= Panel.ae(tr,'td');
+td.align= 'left';
+Panel.at(td,'Uniqueness:');
+td= Panel.ae(tr,'td');
+td.align= 'left';
+sel= panel.seluniq= Panel.ae(td,'select');
+sel.name= 'uniq';
+dflt= (pbn.unique < 0) ? pbn.unique : pbn.myunique;
+Panel.ao(sel, 0, 'please rate this puzzle', dflt);
+Panel.ao(sel, 1, 'Has a unique solution', dflt);
+Panel.ao(sel, 2, 'Has multiple solutions', dflt);
+if (user.mayrule)
+{
+d= 'DEFINITELY ';
+Panel.ao(sel, -1, d+'has a unique solution', dflt);
+Panel.ao(sel, -2, d+'has multiple solutions', dflt);
+}
+setEvent(sel, 'change', function() {panel.saveRating('uniq');});
+note= Panel.ae(td,'span');
+note.id= 'uniqnote'+pbn.suffix;
+}
+if (pbn.logic >= 0 || user.mayrule)
+{
+tr= Panel.ae(tbody,'tr');
+td= Panel.ae(tr,'td');
+td.align= 'left';
+Panel.at(td,'Solvability:');
+td= Panel.ae(tr,'td');
+td.align= 'left';
+sel= panel.sellog= Panel.ae(td,'select');
+sel.name= 'log';
+panel.logOpt( (pbn.logic < 0) ? pbn.logic : pbn.mylogic,
+(pbn.unique < 0) ? pbn.unique : pbn.myunique );
+setEvent(sel, 'change', function() {panel.saveRating('log');});
+note= Panel.ae(td,'span');
+note.id= 'lognote'+pbn.suffix;
+}
+tr= Panel.ae(tbody,'tr');
+td= Panel.ae(tr,'td');
+td.align= 'left';
+Panel.at(td,'Quality:');
+td= Panel.ae(tr,'td');
+td.align= 'left';
+sel= Panel.ae(td,'select');
+sel.name= 'qual';
+dflt= pbn.myqual;
+Panel.ao(sel, 0, 'please rate this puzzle', dflt);
+Panel.ao(sel, 1, '* - Poor', dflt);
+Panel.ao(sel, 2, '**', dflt);
+Panel.ao(sel, 3, '*** - Average', dflt);
+Panel.ao(sel, 4, '****', dflt);
+Panel.ao(sel, 5, '***** - Excellent', dflt);
+setEvent(sel, 'change', function() {panel.saveRating('qual');});
+note= Panel.ae(td,'span');
+note.id= 'qualnote'+pbn.suffix;
+panel.selqual= sel;
+tr= Panel.ae(tbody,'tr');
+td= Panel.ae(tr,'td');
+td.align= 'left';
+Panel.at(td,'Difficulty:');
+td= Panel.ae(tr,'td');
+td.align= 'left';
+sel= Panel.ae(td,'select');
+sel.name= 'diff';
+dflt= pbn.mydiff;
+Panel.ao(sel, 0, 'please rate this puzzle', dflt);
+Panel.ao(sel, 1, '* - Easy', dflt);
+Panel.ao(sel, 2, '**', dflt);
+Panel.ao(sel, 3, '*** - Average', dflt);
+Panel.ao(sel, 4, '****', dflt);
+Panel.ao(sel, 5, '***** - Very Hard', dflt);
+setEvent(sel, 'change', function() {panel.saveRating('diff');});
+note= Panel.ae(td,'span');
+note.id= 'diffnote'+pbn.suffix;
+panel.seldiff= sel;
+}
+Panel.prototype.setMine= function()
+{
+var panel= this;
+var pbn= panel.pbn;
+if (panel.seluniq && pbn.unique >= 0)
+Panel.select(panel.seluniq, pbn.myunique);
+if (panel.sellog && pbn.logic >= 0)
+Panel.select(panel.sellog, pbn.mylogic);
+if (panel.selqual)
+Panel.select(panel.selqual, pbn.myqual);
+if (panel.seldiff)
+Panel.select(panel.seldiff, pbn.mydiff);
+}
+Panel.prototype.saveRating= function(what)
+{
+var panel= this;
+panel.showNote(what,'Saving...');
+var sel= panel['sel'+what];
+var val= sel.options[sel.selectedIndex].value;
+HTTP('XMLrate.cgi','sid='+user.sid+'&id='+panel.pbn.id+
+'&version='+panel.pbn.version+'&'+what+'='+val, true,
+function(req) {panel.rateDone(req,what);});
+if (what == 'uniq')
+panel.logOpt((pbn.logic < 0) ? pbn.logic : pbn.mylogic, val);
+}
+Panel.prototype.showNote= function(what, text)
+{
+var note= document.getElementById(what+'note'+this.pbn.suffix);
+if (!note) return;
+while (note.firstChild) note.removeChild(note.firstChild);
+if (text) Panel.at(note,text);
+}
+Panel.prototype.rateDone= function(req,what)
+{
+var err;
+if (req.readyState == 4)
+{
+if (req.status == 200)
+{
+var resp= getXML(req,'mesg');
+if (!resp)
+err= 'Error: No Response';
+else if (resp != 'OK')
+err= resp;
+var unique= getXML(req,'unique');
+var logic= getXML(req,'logic');
+if (unique != this.pbn.unique || logic != this.pbn.logic)
+{
+if (unique != null) this.pbn.unique= unique - 0;
+if (logic != null) this.pbn.logic= logic - 0;
+this.pbn.setTitle();
+}
+}
+else
+err= 'Error: Cannot Save: '+req.status;
+if (err)
+{
+this.showNote(what, err);
+setTimeout(function(){this.showNote(what);},5000);
+}
+else
+this.showNote(what);
+}
+}
+Panel.prototype.saveOpts= function()
+{
+if (this.resetbuttons)
+{
+this.pbn.setMouseFunc();
+for (i= 0; i < 3; i++)
+this.ppimg[i].src= this.potImage(i);
+}
+this.resetbuttons= false;
+if (!user.saveopt) return;
+var panel= this;
+var optstr= 'domain=play&sid=' + encodeURIComponent(user.sid);
+for (var name in user.opt)
+optstr+= '&' + encodeURIComponent(name) + '=' +
+encodeURIComponent(user.opt[name]);
+HTTP('XMLopt.cgi',optstr, true,
+function(req) {panel.saveOptDone(req);});
+user.saveopt= false;
+}
+Panel.prototype.saveOptDone= function(req)
+{
+if (req.readyState == 4)
+{
+var err;
+if (req.status == 200)
+{
+var resp= getXML(req,'mesg');
+if (!resp)
+err= 'empty response';
+else if (resp != 'OK')
+err= resp;
+}
+else
+err= req.status;
+if (err)
+this.pbn.status('Unable to save options: '+err);
+}
+}
+Panel.prototype.setOpt= function(name, value, save)
+{
+var pbn= this.pbn;
+pbn.opt[name]= value;
+if (name == 'errcheck')
+{
+pbn.allCheck();
+}
+else if (name == 'btn0' || name == 'btn1' || name == 'btn2')
+{
+var n= name.substr(3) - 0;
+if (pbn.btnfunc[n] != value) this.resetbuttons= true;
+}
+else if (name == 'tip')
+{
+if (value)
+{
+var tipbox;
+if (!this.tip &&
+(tipbox= document.getElementById('tip'+pbn.suffix)))
+this.tip= new Tip(tipbox);
+if (this.tip) this.tip.showTip(0);
+}
+else if (this.tip)
+this.tip.hideTip();
+}
+else if (name == 'hovertext')
+pbn.draw.setHoverText(value);
+else if (name == 'dots')
+{
+pbn.draw.setDots(value);
+if (pbn.opt.dots == 1)
+{
+Panel.btnColorImg[0]= 'w';
+Panel.btnColorImg[1]= 'dot';
+}
+else
+{
+Panel.btnColorImg[0]= 'x';
+Panel.btnColorImg[1]= 'w';
+}
+for (var i= 0; i < 3; i++)
+this.ppimg[i].src= this.potImage(i);
+this.menu= null;
+}
+if (save && value !=
+(user.opt[name] ? user.opt[name] : PBN.dfltopt[name]))
+{
+user.opt[name]= value;
+user.saveopt= true;
+}
+if (name == 'noplaytitle')
+pbn.setTitle();
+}
+function fb_share()
+{
+window.open('https://www.facebook.com/sharer/sharer.php?u='+
+encodeURIComponent(location.protocol+'//'+location.host+'/'+pbn.id),
+'facebook-share-dialog', 'width=626,height=436');
+return false;
+}
+/* Web Paint-by-Number - (c) 2009, Jan Wolter - all rights reserved */
+var PBNdraw= 'HTML';
+var DrawVer= '3.2';
+dn= ['left', 'top'];
+function Draw(pbn,hovertext,dots)
+{
+this.pbn= pbn;
+this.hovertext= ((hovertext != null) ? hovertext : 1);
+this.dots= ((dots != null) ? dots : 1);
+pbn.setSizes(this, pbn.size);
+if (this.dots == 1)
+this.srcs= ['img/w.gif', pbn.size+'/dot.gif'];
+else
+this.srcs= ['img/x.gif', 'img/w.gif'];
+for (var i= 2; i <= PBN.nclr; i++)
+this.srcs[i]= 'img/'+PBN.hue[i]+'.gif';
+this.mapcode= {};
+for (var i= 0; i < this.srcs.length; i++)
+this.mapcode[this.srcs[i]]= i;
+this.heregif= pbn.size+'/here.gif';
+this.errgif= pbn.size+'/err.gif';
+this.errheregif= pbn.size+'/errhere.gif';
+this.statimg= [ new Array(pbn.n[SIDE]), new Array(pbn.n[TOP])];
+this.clueimg= [ new Array(pbn.n[SIDE]), new Array(pbn.n[TOP])];
+this.cntimg= [ new Array(pbn.n[SIDE]), new Array(pbn.n[TOP])];
+this.sz= new Array(2);
+for (var d= 0; d < 2; d++)
+for (var i= 0; i < pbn.n[d]; i++)
+this.clueimg[d][i]= [];
+}
+Draw.prototype.setCell= function(i, j, clr)
+{
+target= this.img[i][j];
+target.src= this.srcs[clr];
+if (this.hovertext > 1) target.title= PBN.huename[clr];
+target.height= target.width= this.pbn.block;
+}
+Draw.prototype.markClue= function(target, mode)
+{
+var ma;
+if (target.src &&
+(ma= target.src.match(/\/(\d\/.)(m?)(\/\d+.gif)$/)))
+{
+if (ma[2] != 'm' && (mode & 2))
+{
+target.src= ma[1]+'m'+ma[3];
+return 1;
+}
+if (ma[2] == 'm' && (mode & 1))
+{
+target.src= ma[1]+ma[3];
+return 2;
+}
+}
+return 0;
+}
+Draw.prototype.markClueDIJ= function(d,i,j, mode)
+{
+if (this.clueimg[d][i][j])
+return this.markClue(this.clueimg[d][i][j], mode);
+else
+return 0;
+}
+Draw.prototype.clueColor= function(target)
+{
+var ma= target.src.match(/\/\d\/(.)m?\//);
+for (var i= 0; i <= PBN.nclr; i++)
+if (PBN.hue[i] == ma[1])
+return i;
+}
+Draw.prototype.setStatus= function(d, j, amhere, err)
+{
+this.statimg[d][j].src=
+amhere ? (err ? this.errheregif : this.heregif) :
+(err ? this.errgif : 'img/w.gif');
+this.statimg[d][j].width= this.statimg[d][j].height= this.pbn.block;
+}
+Draw.prototype.setCount= function(d,i,n,c)
+{
+this.cntimg[d][i].src= this.pbn.size+'/'+PBN.hue[c]+'/'+n+'.gif';
+}
+Draw.Arrow= [['L','R'], ['U','D']];
+Draw.prototype.setArrow= function(d,i)
+{
+var side= (this.r[d].style[dn[d]] == '0px') ? 0 : 1;
+this.cntimg[d][i].src= this.pbn.size+'/a'+Draw.Arrow[d][side]+'.gif';
+}
+Draw.prototype.noCount= function(d,i)
+{
+this.cntimg[d][i].src= 'img/w.gif';
+}
+Draw.makeSubRoot= function(id,l,t, w,h)
+{
+var div= document.createElement("DIV");
+div.id= id;
+div.style.position= "absolute";
+div.style.left= l+'px';
+div.style.top= t+'px';
+div.style.width= w+'px';
+div.style.height= h+'px';
+return div;
+}
+Draw.prototype.initRoot= function()
+{
+var pbn= this.pbn;
+this.root= document.createElement("DIV");
+this.root.style.position= "relative";
+this.root.style.width= pbn.w3+'px';
+this.root.style.height= pbn.h3+'px';
+pbn.div.appendChild(this.root);
+this.r= new Array(2);
+this.c= new Array(2);
+this.root.appendChild(this.r[SIDE]=
+Draw.makeSubRoot('sclue', 0,pbn.h2, pbn.w2,pbn.h1));
+this.root.appendChild(this.r[TOP]=
+Draw.makeSubRoot('tclue', pbn.w2,0, pbn.w1,pbn.h2));
+this.root.appendChild(this.grid=
+Draw.makeSubRoot('grid', pbn.w2,pbn.h2, pbn.w1,pbn.h1));
+this.root.appendChild(this.c[SIDE]=
+Draw.makeSubRoot('scnt',pbn.csx,pbn.h2, pbn.block,pbn.h1));
+this.root.appendChild(this.c[TOP]=
+Draw.makeSubRoot('bcnt',pbn.w2,pbn.cby, pbn.w1,pbn.block));
+}
+Draw.makeBackground= function(x,y,w,h)
+{
+var box= document.createElement("IMG");
+box.src= "img/b.gif";
+box.width= ""+w;
+box.height= ""+h;
+box.className= "bgd";
+box.style.position= "absolute";
+box.style.left= x+"px";
+box.style.top= y+"px";
+return box;
+}
+Draw.prototype.initClues= function()
+{
+var btop= Draw.makeBackground(0, 0, this.pbn.w1, this.pbn.h2+2);
+this.r[TOP].appendChild(btop);
+var bleft= Draw.makeBackground(0, 0, this.pbn.w2+2, this.pbn.h1);
+this.r[SIDE].appendChild(bleft);
+}
+Draw.prototype.initGrid= function()
+{
+var bgrid= Draw.makeBackground(0, 0, this.pbn.w1, this.pbn.h1);
+this.grid.appendChild(bgrid);
+this.img= new Array(this.pbn.n[SIDE]);
+for (var i= 0; i < this.pbn.n[SIDE]; i++)
+this.img[i]= new Array(this.pbn.n[TOP]);
+}
+Draw.prototype.makeCell= function(x,y, src, name, id, title)
+{
+var cell=document.createElement("IMG");
+cell.src= src;
+cell.width= cell.height= this.pbn.block;
+cell.style.position= "absolute";
+cell.style.left= x+"px";
+cell.style.top= y+"px";
+cell.name= name;
+cell.id= id;
+if (title) cell.title= title;
+return cell
+}
+Draw.prototype.addClueNumber= function(d, x,y, clue, i,j)
+{
+var id= (d == SIDE ? 'cs' : 'ct')+i+'.'+j;
+var cell= this.clueimg[d][i][j]= this.makeCell(x,y,
+this.pbn.size+'/'+PBN.hue[clue.c]+'/'+clue.n+'.gif', 'cn',
+id,
+this.hovertext > 0 ? PBN.clueText(clue) : null);
+this.r[d].appendChild(cell);
+return cell;
+}
+Draw.prototype.addStatus= function(d, x,y, i)
+{
+var cell= this.statimg[d][i]= this.makeCell(x,y, "img/w.gif", 'cb');
+this.r[d].appendChild(cell);
+}
+Draw.prototype.addCountCell= function(d, x,y, i)
+{
+var cell= this.cntimg[d][i]= this.makeCell(x,y, "img/w.gif");
+this.c[d].appendChild(cell);
+}
+Draw.prototype.addGridCell= function(x,y, i,j, clr, id)
+{
+var cell= this.img[i][j]= this.makeCell(x,y, this.srcs[clr], id, id,
+this.hovertext > 1 ? PBN.huename[clr] : null);
+this.grid.appendChild(cell);
+}
+Draw.prototype.addPuzzleSize= function(d, x,y, n)
+{
+var cell= this.sz[d]=
+this.makeCell(x,y, this.pbn.size+"/g/"+n+".gif", 'sz');
+this.root.appendChild(cell);
+}
+Draw.resizeObj= function(o, w,h)
+{
+o.style.width= w+'px';
+o.style.height= h+'px';
+}
+Draw.resizeImg= function(o, w,h, x,y)
+{
+o.width= w;
+o.height= h;
+if (x != null) o.style.left= x+'px';
+if (y != null) o.style.top= y+'px';
+}
+Draw.prototype.doResize= function(inc)
+{
+var pbn= this.pbn;
+var x,y, cc, cr;
+var oldblock= 8+2*pbn.size;
+var olddir= new RegExp('/'+pbn.size+'/');
+pbn.size+= inc;
+if (pbn.size < 1) pbn.size= 1;
+if (pbn.size > 3) pbn.size= 3;
+var newdir= '/'+pbn.size+'/';
+pbn.panel.zoomButton();
+if (this.dots == 1) this.srcs[1]= pbn.size+'/dot.gif';
+this.heregif= pbn.size+'/here.gif';
+this.errgif= pbn.size+'/err.gif';
+this.errheregif= pbn.size+'/errhere.gif';
+pbn.setSizes(pbn, pbn.size);
+pbn.setSizes(this, pbn.size);
+var vstrut= document.getElementById('vstrut'+pbn.suffix);
+if (vstrut) vstrut.height= pbn.h3;
+var hstrut= document.getElementById('hstrut'+pbn.suffix);
+if (hstrut) hstrut.width= pbn.w3;
+Draw.resizeObj(pbn.div, pbn.w3,pbn.h3);
+Draw.resizeObj(this.root, pbn.w3,pbn.h3);
+Draw.resizeObj(this.r[SIDE], pbn.w2,pbn.h1);
+Draw.resizeObj(this.r[TOP], pbn.w1,pbn.h2);
+Draw.resizeObj(this.grid, pbn.w1,pbn.h1);
+Draw.resizeObj(this.c[SIDE], pbn.block,pbn.h1);
+Draw.resizeObj(this.c[TOP], pbn.w1,pbn.block);
+Draw.resizeImg(cr= this.sz[SIDE], pbn.block,pbn.block);
+cr.src= cr.src.replace(olddir,newdir);
+Draw.resizeImg(cr= this.sz[TOP], pbn.block,pbn.block);
+cr.src= cr.src.replace(olddir,newdir);
+var sflip= this.shiftClues(SIDE, 2);
+var tflip= this.shiftClues(TOP, 2);
+cr= this.r[TOP].firstChild;
+cc= this.c[TOP].firstChild;
+Draw.resizeImg(cr, pbn.w1, pbn.h2+2);
+x= 1;
+for (var j= 0; j < pbn.n[TOP]; j++)
+{
+if ((j % 5) == 0) x++;
+y= 2;
+for (var k= 0; k <= pbn.maxclue[TOP]; k++)
+{
+cr= cr.nextSibling;
+Draw.resizeImg(cr, pbn.block,pbn.block, x,y);
+cr.src= cr.src.replace(olddir,newdir);
+y+= pbn.block;
+}
+Draw.resizeImg(cc, pbn.block, pbn.block, x,0);
+cc= cc.nextSibling;
+x+= pbn.block+1;
+}
+if (tflip) pbn.flipClues(this.r[TOP], TOP);
+cr= this.r[SIDE].firstChild;
+Draw.resizeImg(cr, pbn.w2+2, pbn.h1);
+y= 1;
+for (var i= 0; i < pbn.n[SIDE]; i++)
+{
+if ((i % 5) == 0) y++;
+x= 2;
+for (var k= 0; k <= pbn.maxclue[SIDE]; k++)
+{
+cr= cr.nextSibling;
+Draw.resizeImg(cr, pbn.block,pbn.block, x,y);
+cr.src= cr.src.replace(olddir,newdir);
+x+= pbn.block;
+}
+y+= pbn.block+1;
+}
+if (sflip) pbn.flipClues(this.r[SIDE], SIDE);
+cr= this.grid.firstChild;
+cc= this.c[SIDE].firstChild;
+Draw.resizeImg(cr, pbn.w1, pbn.h1);
+y= 1;
+for (var i= 0; i < pbn.n[SIDE]; i++)
+{
+if ((i % 5) == 0) y++;
+x= 1;
+for (var j= 0; j < pbn.n[TOP]; j++)
+{
+if ((j % 5) == 0) x++;
+cr= cr.nextSibling;
+Draw.resizeImg(cr, pbn.block,pbn.block, x,y);
+cr.src= cr.src.replace(olddir,newdir);
+x+= pbn.block+1;
+}
+Draw.resizeImg(cc, pbn.block,pbn.block, 0,y);
+cc= cc.nextSibling;
+y+= pbn.block+1;
+}
+pbn.status('');
+}
+Draw.prototype.shiftClues= function(d, side)
+{
+var ds= dn[d];
+var old= (this.r[d].style[ds] == '0px') ? 0 : 1;
+if (side > 1) side= (side == 2) ? old : 1-old;
+if (side == 0)
+{
+this.r[d].style[ds]= '0px';
+this.r[1-d].style[ds]= this.grid.style[ds]= this.c[1-d].style[ds]=
+this.pbn[d == SIDE ? 'w2' : 'h2']+'px';
+this.c[d].style[ds]=
+this.pbn[d == SIDE ? 'csx' : 'cby']+'px';
+this.sz[d].style[ds]= '2px';
+this.sz[1-d].style[ds]= 2 + this.pbn.maxclue[d]*this.pbn.block+'px';
+}
+else
+{
+var a= this.pbn.block + this.pbn[d == SIDE ? 'w1' : 'h1'];
+this.c[d].style[ds]= '0px';
+this.grid.style[ds]= this.r[1-d].style[ds]=
+this.c[1-d].style[ds]= this.pbn.block+'px';
+this.r[d].style[ds]= (a-2)+'px';
+this.sz[1-d].style[ds]= a + 'px';
+this.sz[d].style[ds]= a + this.pbn.maxclue[d]*this.pbn.block+'px';
+}
+return old;
+}
+Draw.moveBlock= function(t,d,n)
+{
+t.style[dn[d]]= (parseInt(t.style[dn[d]])+n)+'px';
+}
+Draw.prototype.flipClues= function(div,d)
+{
+var n= pbn.maxclue[d];
+var b= div.firstChild.nextSibling;
+var dir= ((b.style[dn[d]] == '2px') ? 1 : -1);
+for (var i= 0; i < pbn.n[d]; i++)
+{
+var k= pbn.clue[d][i].length;
+var n1= (k+1)*pbn.block*dir;
+var n2= (2*k - n)*pbn.block*dir;
+var n3= (k-n-1)*pbn.block*dir;
+for (var j= 0; j < n-k; j++, b= b.nextSibling)
+Draw.moveBlock(b,d,n1);
+Draw.moveBlock(b,d,n2);
+b= b.nextSibling;
+for (var j= 0; j < k; j++, b= b.nextSibling)
+Draw.moveBlock(b,d,n3);
+}
+}
+Draw.prototype.setHoverText= function(flag)
+{
+var pbn= this.pbn;
+if ((flag > 0) != (this.hovertext > 0))
+for (var d= 0; d < 2; d++)
+for (var i= 0; i < pbn.n[d]; i++)
+for (var j= 0; j < this.clueimg[d][i].length; j++)
+this.clueimg[d][i][j].title= (flag > 0) ?
+PBN.clueText(pbn.clue[d][i][j]) : null;
+if ((flag > 1) != (this.hovertext > 1))
+for (var i= 0; i < pbn.n[SIDE]; i++)
+for (var j= 0; j < pbn.n[TOP]; j++)
+this.img[i][j].title= (flag > 1) ?
+PBN.huename[pbn.bit[i][j]] : null;
+this.hovertext= flag;
+}
+Draw.prototype.setDots= function(flag)
+{
+if (flag == this.dots) return;
+this.dots= flag-0;
+var pbn= this.pbn;
+if (this.dots == 1)
+{
+this.srcs[0]= 'img/w.gif';
+this.srcs[1]= pbn.size+'/dot.gif';
+}
+else
+{
+this.srcs[0]= 'img/x.gif';
+this.srcs[1]= 'img/w.gif';
+}
+for (var i= 0; i < pbn.n[SIDE]; i++)
+for (var j= 0; j < pbn.n[TOP]; j++)
+if (pbn.bit[i][j] < 2)
+this.img[i][j].src= this.srcs[pbn.bit[i][j]];
+}
+/* Web Paint-by-Number - (c) 2009, Jan Wolter - all rights reserved */
+var PBNline= 'RE';
+var LineVer= '3.4';
+function LineSolve(pbn)
+{
+this.pbn= pbn;
+this.re= new Array(2);
+this.er= new Array(2);
+for (var d= 0; d < 2; d++)
+{
+var len= pbn.n[1-d];
+this.re[d]= new Array(pbn.clue[d].length);
+this.er[d]= new Array(pbn.clue[d].length);
+for (var i= 0; i < pbn.clue[d].length; i++)
+{
+var re= LineSolve.makeTwoRE(pbn.clue[d][i], len, true);
+this.re[d][i]= new RegExp(re[0]);
+this.er[d][i]= new RegExp(re[1]);
+}
+}
+}
+LineSolve.helper= 'jsz/helper_reg_01290.js';
+LineSolve.prototype.check= function(d,i,j)
+{
+var pbn= this.pbn;
+var rc= 2;
+var line= '';
+var rev= (this.er && this.er[d] && this.er[d][i] && 2*j > pbn.n[1-d]);
+for (var k= 0; k < pbn.n[1-d]; k++)
+{
+var x= PBN.xclr[(d == SIDE) ? pbn.bit[i][k] : pbn.bit[k][i]];
+if (x == 'x') rc= 1;
+line= rev ? x+line : line+x;
+}
+if (line.search(rev ? this.er[d][i] : this.re[d][i]) < 0) rc= 0;
+return rc;
+}
+LineSolve.makeRE= function(clue, n)
+{
+if (clue.length == 0) return "^[x0]{"+n+"}$";
+var sz, so;
+var s= PBN.slack(clue, n);
+if (s == 0)
+{
+sz= '{0}';
+so= '';
+}
+else
+{
+sz= '{0,'+s+'}';
+so= '{1,'+(s+1)+'}';
+}
+var g= nongreedy ? '?' : '';
+var re= '^';
+var lastcol= 'x';
+for (var i= 0; i < clue.length; i++)
+{
+var cnt= clue[i].n;
+if (cnt == 0)
+cnt= '1,'+(s+1)+'}'+g;
+else
+cnt= cnt+'}';
+var col= PBN.xclr[clue[i].c];
+var rep= ((col == lastcol) ? so : sz);
+lastcol= col;
+re+= "[x0]"+rep+g+"[x"+col+"]{"+cnt;
+}
+return re+'[x0]'+sz+'$';
+}
+LineSolve.makeTwoRE= function(clue, n, paren)
+{
+if (clue.length == 0)
+{
+if (paren)
+return ['^([x0]{'+n+'})$', '^([x0]{'+n+'})$'];
+else
+return ['^[x0]{'+n+'}$', '^[x0]{'+n+'}$'];
+}
+var sz, so;
+var s= PBN.slack(clue, n);
+if (s == 0)
+{
+sz= '{0}';
+so= '';
+}
+else
+{
+sz= '{0,'+s+'}';
+so= '{1,'+(s+1)+'}';
+}
+var g= nongreedy ? '?' : '';
+var forward= '^';
+var backward= '$';
+var lastcol= 'x';
+for (var i= 0; i < clue.length; i++)
+{
+var cnt= clue[i].n;
+if (cnt == 0)
+cnt= '1,'+(s+1)+'}'+g;
+else
+cnt= cnt+'}';
+var col= PBN.xclr[clue[i].c];
+var rep= ((col == lastcol) ? so : sz);
+lastcol= col;
+if (paren)
+{
+forward+= "([x0]"+rep+g+")([x"+col+"]{"+cnt+")";
+backward= "([x"+col+"]{"+cnt+")([x0]"+rep+g+")"+backward;
+}
+else
+{
+forward+= "[x0]"+rep+g+"[x"+col+"]{"+cnt;
+backward= "[x"+col+"]{"+cnt+"[x0]"+rep+g+backward;
+}
+}
+if (paren)
+return [forward+'([x0]'+sz+')$', '^([x0]'+sz+g+')'+backward];
+else
+return [forward+'[x0]'+sz+'$', '^[x0]'+sz+g+backward];
+}
+/* Web Paint-by-Number - (c) 2009, Jan Wolter - all rights reserved */
+var PlayVer= '3.4';
+function PBN()
+{
+this.loaded= false;
+this.opt= new Object;
+for (var o in PBN.dfltopt)
+this.opt[o]= (user.opt && user.opt[o]) ? user.opt[o]-0 : PBN.dfltopt[o];
+}
+var SIDE= 0;
+var TOP= 1;
+PBN.hue=  ['x', 'w', 'g', 'r', 'n', 'u'];
+PBN.xclr= ['x', '0', '1', '2', '3', '4'];
+PBN.huename= ['unknown', 'white', 'black', 'red', 'green', 'blue'];
+PBN.nclr= PBN.hue.length - 1;
+PBN.clrx= new Object();
+for (var i= 0; i < PBN.xclr.length; i++)
+PBN.clrx[PBN.xclr[i]]= i;
+PBN.namehue= new Object;
+for (var i= 0; i < PBN.huename.length; i++)
+PBN.namehue[PBN.huename[i]]= i;
+PBN.dfltopt=
+{
+'errcheck' : 1,
+'btn0' : 1,
+'btn1' : 4,
+'btn2' : 2,
+'dots' : 1,
+'hovertext' : 1,
+'noplaytitle' : 0,
+'skipcolor' : 0,
+'overshoot' : 0,
+'tip' : 1
+};
+PBN.prototype.status= function(mesg,append,red)
+{
+var s= this.statusbox;
+if (this.dct) {clearTimeout(this.dct); this.dct= null;}
+if (!s) return;
+switch (append)
+{
+case 1: s.insertBefore(document.createElement('br'),s.firstChild);
+case 2: s.appendChild(document.createElement('br')); break;
+default: while (s.firstChild) s.removeChild(s.firstChild); break;
+}
+if (mesg)
+{
+var txt= document.createTextNode(mesg);
+if (red)
+{
+var font= document.createElement('font');
+font.setAttribute('color','red');
+var strong= document.createElement('strong');
+font.appendChild(strong);
+strong.appendChild(txt);
+txt= font;
+}
+if (append == 1)
+s.insertBefore(txt,s.firstChild);
+else
+s.appendChild(txt);
+}
+}
+PBN.prototype.delayClear= function(timeout)
+{
+var pbn= this;
+if (!timeout) timeout= 30000;
+if (pbn.dct) clearTimeout(pbn.dct);
+pbn.dct= setTimeout(function () {pbn.dct= null; pbn.status();}, timeout);
+}
+PBN.prototype.webpbn= function(suffix, callback, puzid, puzversion, size)
+{
+var pbn= this;
+pbn.suffix= (suffix != null) ? suffix : '';
+pbn.statusbox= document.getElementById('status'+pbn.suffix);
+pbn.loadPuzzle(puzid, puzversion);
+if (pbn.loaded)
+{
+try {pbn.panel= new Panel(pbn)} catch(e){}
+var grid= document.getElementById('grid'+pbn.suffix);
+if (!grid)
+{
+pbn.status("Error: No HTML element with ID 'grid"+pbn.suffix+"'");
+return;
+}
+this.drawBoard(grid, size, function() {pbn.webpbn2(callback)});
+}
+else if (callback)
+callback();
+}
+PBN.prototype.webpbn2= function(callback)
+{
+var rate= document.getElementById('rate'+this.suffix);
+var pan= document.getElementById('panel'+this.suffix);
+if (pan) this.panel.showPanel(pan);
+if (rate) this.panel.showRate(rate);
+if (callback) callback();
+}
+PBN.prototype.loadPuzzle= function(puzid, puzversion)
+{
+var pbn= this;
+pbn.id= (puzid ? puzid : arg.id - 0);
+if (!(pbn.id > 0)) return pbn.status("No puzzle ID given");
+pbn.version= (puzversion ? puzversion : ((arg.version - 0) || 0));
+pbn.status('Loading puzzle...');
+HTTP('XMLpuz.cgi','id='+pbn.id+'&version='+pbn.version+
+'&restore='+arg.restore+'&sid='+user.sid, false,
+function(req){pbn.gotPuz(req);});
+}
+PBN.prototype.gotPuz= function(req)
+{
+if (req.status == 200)
+{
+if (!req.responseXML)
+this.status('Puzzle load error: '+req.responseText);
+else
+{
+var ps= req.responseXML.getElementsByTagName('puzzleset')
+if (ps)
+{
+var msg;
+this.status('Drawing puzzle...');
+if (msg= this.XMLpuzzle(ps[0]))
+this.status('XML puzzle parsing error: '+msg);
+else
+this.loaded= true;
+}
+else
+this.status('Bad puzzle format');
+}
+}
+else
+this.status('Cannot load puzzle: '+req.status);
+}
+var logic_pattern= ['trivial',
+'line',
+'moderate',
+'deep',
+'some',
+'much'];
+PBN.prototype.XMLpuzzle= function(ps)
+{
+var p, dfltcolor;
+this.pub= 1;
+this.logic= 0;
+this.unique= 0;
+for (p= ps.firstChild; p != null; p= p.nextSibling)
+{
+if (!p.tagName) continue;
+if (p.tagName == 'puzzle' && p.getAttribute('type') == 'grid')
+break;
+else if (p.tagName == 'author')
+this.author= p.firstChild.nodeValue;
+else if (p.tagName == 'authorid')
+this.authid= p.firstChild.nodeValue;
+else if (p.tagName == 'copyright')
+this.copyright= p.firstChild.nodeValue;
+}
+if (!p) return 'No puzzle found';
+var dc= (p.getAttribute('defaultcolor') || 'black');
+if ((dfltcolor= PBN.namehue[dc]) == null)
+return 'Unknown default color '+dc;
+var incolor= {'.':0, 'x':1 };
+this.clue= new Array(2);
+this.usecolor= new Array(PBN.nclr+1);
+for (var i= 0; i < PBN.nclr+1; i++) this.usecolor[i]= (i < 2);
+this.maxclue= [0,0];
+for (t= p.firstChild; t != null; t= t.nextSibling)
+{
+if (!t.tagName || !t.firstChild) continue;
+if (t.tagName == 'author')
+this.author= t.firstChild.nodeValue;
+else if (t.tagName == 'authorid')
+this.authid= t.firstChild.nodeValue;
+else if (t.tagName == 'copyright')
+this.copyright= t.firstChild.nodeValue;
+else if (t.tagName == 'description')
+this.desc= t.firstChild.nodeValue;
+else if (t.tagName == 'title')
+this.title= t.firstChild.nodeValue;
+else if (t.tagName == 'id')
+{
+var a= t.firstChild.nodeValue.match(/v\.(\d+)/);
+if (a[1]) this.version= a[1] - 0;
+}
+else if (t.tagName == 'note')
+{
+var a= t.firstChild.nodeValue.split(',');
+this.pub= (a[0].indexOf('obso') >= 0) ? -2 :
+((a[0].indexOf('unpub') >= 0) ? 0 : 1);
+if (a[1] && a[1].indexOf('unique') >= 0)
+{
+this.unique= ((a[1].indexOf('non') >= 0) ? 2 : 1) *
+((a[1].indexOf('defin') >= 0) ? -1 : 1);
+a[1]= a[2];
+}
+if (a[1])
+{
+for (var i= 0; i < 6; i++)
+if (a[1].indexOf(logic_pattern[i]) >= 0)
+{
+this.logic= i+1;
+if (a[1].indexOf('defin') >= 0)
+this.logic= -this.logic;
+break;
+}
+}
+}
+else if (t.tagName == 'color')
+{
+var cname= t.getAttribute('name');
+var cchar= t.getAttribute('char');
+var i= PBN.namehue[cname];
+if (i == null)
+return 'Unknown color '+cname;
+incolor[cchar]= i;
+}
+else if (t.tagName == 'clues')
+{
+var ctype= t.getAttribute('type');
+var rc= (ctype == 'columns') ? TOP : SIDE;
+var i= 0;
+this.clue[rc]= new Array();
+for (var c= t.firstChild; c != null; c= c.nextSibling)
+if (c.tagName == 'line')
+{
+this.clue[rc][i]= new Array();
+var j= 0;
+for (var l= c.firstChild; l != null; l= l.nextSibling)
+if (l.tagName == 'count')
+{
+this.clue[rc][i][j]= new Object;
+this.clue[rc][i][j].n= l.firstChild.nodeValue - 0;
+var clr= l.getAttribute('color');
+if (clr == null)
+this.clue[rc][i][j].c= dfltcolor;
+else if (PBN.namehue[clr] == null)
+return 'Unknown color '+clr+' in clue';
+else
+this.clue[rc][i][j].c= PBN.namehue[clr];
+this.usecolor[this.clue[rc][i][j].c]= true;
+j++;
+}
+if (this.clue[rc][i].length > this.maxclue[rc])
+this.maxclue[rc]= this.clue[rc][i].length;
+i++;
+}
+}
+}
+this.n= [this.clue[SIDE].length,
+this.clue[TOP].length];
+this.solver= (user.mayrule ||
+(this.authid && user.status == 'Ok' && this.authid == user.username ));
+}
+PBN.prototype.setSizes= function(p, size)
+{
+p.block= 8 + 2*size;
+p.nvfat= Math.floor(pbn.n[TOP]/5);
+p.w1= (p.block+1)*pbn.n[TOP] + p.nvfat + 2;
+p.w2= p.block * (pbn.maxclue[SIDE] + 1) + 2;// width of side clues
+p.csx= p.w1 + p.w2;
+p.w3= p.csx + p.block;
+p.nhfat= Math.floor(pbn.n[SIDE]/5);
+p.h1= (p.block+1)*pbn.n[SIDE] + p.nhfat + 2;// height of grid
+p.h2= p.block * (pbn.maxclue[TOP] + 1) + 2;
+p.cby= p.h1 + p.h2;
+p.h3= p.cby + p.block;
+}
+PBN.prototype.setTitle= function()
+{
+var tdiv= document.getElementById('title'+this.suffix);
+if (!tdiv) return;
+while (tdiv.firstChild) tdiv.removeChild(tdiv.firstChild);
+var st= document.createElement('strong')
+tdiv.appendChild(st);
+var ft= document.createElement('font')
+ft.className= 'large';
+st.appendChild(ft);
+ft.appendChild(
+document.createTextNode('Web Paint-By-Number Puzzle #'+this.id+
+(this.version > 1 ? ' (version '+this.version+')' : '')+ ':'));
+ft.appendChild(document.createElement('br'));
+if (this.title && (!this.opt.noplaytitle || this.complete))
+{
+ft.appendChild(document.createTextNode(this.title));
+tdiv.appendChild(document.createElement('br'));
+}
+tdiv.appendChild(
+document.createTextNode('By '+this.author+' ('+this.authid+')'));
+var parentxt= '';
+if (!this.pub) parentxt= 'unpublished';
+if (Math.abs(this.unique) == 2)
+{
+if (parentxt.length > 0) parentxt+= ', ';
+parentxt+= ((this.unique < 0) ? 'has' : 'may have')+
+' multiple solutions';
+}
+if (Math.abs(this.logic) > 3)
+{
+if (parentxt.length > 0) parentxt+= ', ';
+parentxt+= ((this.logic < 0) ? 'requires ' : 'may require ');
+if (Math.abs(this.logic) == 4)
+parentxt+= 'deep lookahead';
+else if (Math.abs(this.logic) == 5)
+parentxt+= 'some guessing';
+else
+parentxt+= 'much guessing';
+}
+if (parentxt.length > 0)
+{
+var node= document.createElement('br');
+tdiv.appendChild(node);
+node= document.createTextNode('('+parentxt+')');
+tdiv.appendChild(node);
+}
+return tdiv.offsetHeight;
+}
+PBN.prototype.drawBoard= function(parent, size, callback)
+{
+var pbn= this;
+pbn.div= parent;
+var th= pbn.setTitle();
+if (size || !winHeight || !winWidth)
+{
+pbn.size= size ? size : 1;
+pbn.setSizes(pbn, pbn.size);
+}
+else
+{
+pbn.size= (PBNdraw == 'SVG') ? 7 : 3;
+while (true)
+{
+pbn.setSizes(pbn, pbn.size);
+if (pbn.size == 1 ||
+(pbn.w3 <= winWidth && pbn.h3 + th + 20 <= winHeight))
+break;
+pbn.size--;
+}
+}
+pbn.ncell= pbn.n[TOP]*pbn.n[SIDE];
+pbn.ati= pbn.atj= -1;
+this.btnfunc= new Array(3);
+this.btncolor= [1,1,1];
+this.setMouseFunc(this.opt.mousefunc);
+pbn.bit= new Array(pbn.n[SIDE]);
+for (var i= 0; i < pbn.n[SIDE]; i++)
+{
+pbn.bit[i]= new Array(pbn.n[TOP]);
+for (var j= 0; j < pbn.n[TOP]; j++)
+pbn.bit[i][j]= 0;
+}
+pbn.hist= [];
+pbn.hi= 0;
+pbn.cluepos= [1,1];
+pbn.arrowD= 0;
+pbn.arrowI= 0;
+var draw= pbn.draw= new Draw(pbn, this.opt.hovertext, this.opt.dots);
+pbn.err= [ new Array(pbn.n[SIDE]), new Array(pbn.n[TOP]) ];
+pbn.div.style.width= pbn.w3+'px';
+pbn.div.style.height= pbn.h3+'px';
+draw.initRoot();
+draw.initClues();
+var x, y, ci;
+pbn.cset= new Array(PBN.nclr+1);
+pbn.cnum= new Array(PBN.nclr+1);
+var blotclr= new Array(PBN.nclr+1);
+for (var clr= 0; clr <= PBN.nclr; clr++)
+{
+pbn.cnum[clr]= pbn.cset[clr]= 0;
+blotclr[clr]= false;
+}
+pbn.cnum[0]= Number.MAX_VALUE;
+pbn.cnum[1]= pbn.ncell;
+x= 1;
+var haveblot= false;
+for (var j= 0; j < pbn.n[TOP]; j++)
+{
+if ((j % 5) == 0) x++;
+ci= pbn.clue[TOP][j].length - pbn.maxclue[TOP] - 1;
+y= 2;
+for (var k= 0; k <= pbn.maxclue[TOP]; k++, ci++)
+{
+if (ci < 0)
+draw.addStatus(TOP, x,y, j, k == 0);
+else
+{
+draw.addClueNumber(TOP, x,y, pbn.clue[TOP][j][ci], j,ci);
+if (pbn.clue[TOP][j][ci].n > 0)
+{
+pbn.cnum[pbn.clue[TOP][j][ci].c]+= pbn.clue[TOP][j][ci].n;
+pbn.cnum[1]-= pbn.clue[TOP][j][ci].n;
+}
+else
+{
+haveblot= true;
+blotclr[pbn.clue[TOP][j][ci].c]= true;
+pbn.cnum[pbn.clue[TOP][j][ci].c]++;
+pbn.cnum[1]--;
+}
+}
+y+= draw.block;
+}
+if (haveblot)
+{
+var slack= PBN.slack(pbn.clue[TOP][j],pbn.n[SIDE]);
+for (var clr= 2; clr <= PBN.nclr; clr++)
+if (blotclr[clr])
+{
+pbn.cnum[clr]+= slack;
+blotclr[clr]= false;
+}
+haveblot= false;
+}
+pbn.draw.addCountCell(TOP, x,0, j);
+x+= draw.block + 1;
+pbn.err[TOP][j]= false;
+}
+y= 1;
+for (var i= 0; i < pbn.n[SIDE]; i++)
+{
+if ((i % 5) == 0) y++;
+ci= pbn.clue[SIDE][i].length - pbn.maxclue[SIDE] - 1;
+x= 2;
+for (var k= 0; k <= pbn.maxclue[SIDE]; k++, ci++)
+{
+if (ci < 0)
+draw.addStatus(SIDE, x,y, i, k == 0);
+else
+draw.addClueNumber(SIDE, x,y, pbn.clue[SIDE][i][ci], i,ci);
+x+= draw.block;
+}
+y+= draw.block + 1;
+pbn.err[SIDE][i]= false;
+}
+draw.addPuzzleSize(SIDE, 2,2+pbn.maxclue[TOP]*draw.block, pbn.n[SIDE]);
+draw.addPuzzleSize(TOP, 2+pbn.maxclue[SIDE]*draw.block,2, pbn.n[TOP]);
+setTimeout(function () {pbn.drawBoard2(callback);},
+210+5*(pbn.n[SIDE]+pbn.n[TOP]));
+}
+PBN.prototype.drawBoard2= function(callback)
+{
+var pbn= this;
+var draw= pbn.draw;
+var clr, ci;
+var x, y;
+y= 1;
+pbn.nset= 0;
+pbn.line= new LineSolve(pbn);
+pbn.draw.initGrid();
+for (var i= 0; i < pbn.n[SIDE]; i++)
+{
+if ((i % 5) == 0) y++;
+x= 1;
+for (var j= 0; j < pbn.n[TOP]; j++)
+{
+if ((j % 5) == 0) x++;
+draw.addGridCell(x,y, i,j, 0, 'x'+i+'.'+j);
+x+= draw.block + 1;
+}
+draw.addCountCell(SIDE, 0,y, i);
+y+= draw.block + 1;
+}
+var fclick= function(e){pbn.click(e);};
+setEvent(document, 'mouseup', fclick);
+setEvent(document, 'mousedown', fclick);
+setEvent(document, 'click', fclick);
+setEvent(document, 'dblclick', fclick);
+setEvent(document, 'keydown', function(e){pbn.keyDown(e);});
+setEvent(document, 'keyup', function(e){pbn.keyUp(e);});
+setEvent(document, 'keypress', function(e) {pbn.keyPress(e);});
+setEvent(pbn.div, 'mouseover', function(e){pbn.over(e);});
+setEvent(pbn.div, 'contextmenu', dont);
+setEvent(pbn.div, 'dragstart', dont);
+window.focus();
+pbn.status('');
+if (callback) callback();
+}
+PBN.prototype.click= function(e)
+{
+if (!e) e= event;
+var b= btn(e);
+var func= this.btnfunc[b.whichButton];
+var target= e.target ? e.target : e.srcElement;
+if (func == 0) return true;
+var mc;
+if (target.id == null || target.id.charAt(0) != 'x')
+{
+if (target.id && target.id.charAt(0)=='c' && b.upDown&1)
+{
+if (func == 5)
+this.eyedropper(this.draw.clueColor(target));
+else if (mc= this.draw.markClue(target,3))
+{
+this.clueHist(mc == 1, target.id);
+this.painting= 2;
+this.paintColor= (mc == 1 ? 1 : 0);
+}
+return dont(e);
+}
+else if (target.name == 'cb')
+{
+if (b.upDown == 1)
+{
+if (func == 5)
+this.eyedropper(1);
+}
+this.painting= 0;
+return dont(e);
+}
+else if (b.upDown != 0)
+this.painting= 0;
+if (target.id && target.id.charAt(0) == 'm')
+{
+if ((b.upDown&2) != 0 && this.panel)
+return this.panel.menuSel(e);
+}
+else if (func == 6 && (b.upDown&1) == 1 && target.className == "bgd")
+{
+if (this.panel) this.panel.mn(e);
+}
+else if (func != 6 || (b.upDown&1) == 1)
+{
+if (this.panel) this.panel.mn(null);
+}
+if (target.className == "bgd")
+return dont(e);
+return true;
+}
+if (b.upDown == 0) return true;
+var coord= target.id.match(/\d+/g);
+var i= coord[0]-0;
+var j= coord[1]-0;
+if ((b.upDown&1) == 1)
+{
+if (func == 5)
+{
+this.eyedropper(this.bit[i][j] > 0 ? this.bit[i][j] : 1);
+return dont(e);
+}
+if (func == 6 && this.panel)
+{
+this.panel.mn(this.panel.menuon ? null : e);
+return true;
+}
+var clr= this.addHist(i,j);
+switch (func)
+{
+default:
+case 1:
+for (clr= (clr+1) % (PBN.nclr+1);
+!this.usecolor[clr] ||
+(this.opt.skipcolor && this.cset[clr] >= this.cnum[clr]);
+clr= (clr+1) % (PBN.nclr+1)) ;
+break;
+case 2:
+for (clr= (clr+PBN.nclr) % (PBN.nclr+1);
+!this.usecolor[clr] ||
+(this.opt.skipcolor && this.cset[clr] >= this.cnum[clr]);
+clr= (clr+PBN.nclr) % (PBN.nclr+1)) ;
+break;
+case 3:
+clr= this.btncolor[b.whichButton]; break;
+case 4:
+clr= (clr == this.btncolor[b.whichButton]) ?
+0 : this.btncolor[b.whichButton]; break;
+}
+this.setState(i,j,clr);
+this.showLen();
+this.painting= 1;
+this.ati= i; this.atj= j;
+this.paintColor= clr;
+this.paintKeyCode= void 0;
+}
+if ((b.upDown&2) == 2)
+{
+this.painting= 0;
+if (func != 5 && this.panel) this.panel.mn(null);
+}
+return dont(e);
+}
+PBN.prototype.over= function(e)
+{
+if (!e) e= event;
+var target= (e.target ? e.target : e.srcElement);
+if (target == null) return;
+if (target.id == null || target.id.charAt(0) != 'x')
+{
+var mc;
+if (this.painting == 2 &&
+(mc= this.draw.markClue(target,this.paintColor+1)) > 0)
+this.clueHist(mc == 1, target.id);
+return;
+}
+var iname= target.id.substr(1);
+var coord= iname.match(/\d+/g);
+var i= coord[0]-0;
+var j= coord[1]-0;
+if (this.counton) this.noLen();
+if (this.painting == 1 && this.bit[i][j] != this.paintColor)
+{
+if (this.ati > 0 && this.atj > 0)
+{
+var di= Math.abs(this.ati - i), dj= Math.abs(this.atj - j);
+if (di == 0 && 1 < dj && dj < 7)
+{
+var tj, sj= (j - this.atj)/dj;
+for (tj= this.atj + sj; tj != j; tj+= sj)
+{
+this.addHist(i,tj);
+this.setState(i,tj, this.paintColor);
+this.draw.setStatus(TOP, tj, false, this.err[TOP][tj]);
+}
+}
+else if (dj == 0 && 1 < di && di < 7)
+{
+var ti, si= (i - this.ati)/di;
+for (ti= this.ati + si; ti != i; ti+= si)
+{
+this.addHist(ti,j);
+this.setState(ti,j, this.paintColor);
+this.draw.setStatus(SIDE, ti, false, this.err[SIDE][ti]);
+}
+}
+}
+this.addHist(i,j);
+this.setState(i,j, this.paintColor);
+}
+if (this.ati != i || this.painting == 1)
+{
+if (this.ati >= 0)
+this.draw.setStatus(SIDE,this.ati,false,this.err[SIDE][this.ati]);
+this.draw.setStatus(SIDE,i,true,this.err[SIDE][i]);
+this.ati= i;
+}
+if (this.atj != j || this.painting == 1)
+{
+if (this.atj >= 0)
+this.draw.setStatus(TOP,this.atj,false,this.err[TOP][this.atj]);
+this.draw.setStatus(TOP,j,true,this.err[TOP][j]);
+this.atj= j;
+}
+this.showLen();
+}
+PBN.prototype.keyDown= function(e)
+{
+if (lbox) return true;
+if (!e) e= event;
+var code= e.which ? e.which : e.keyCode;
+if (code < 32 && code != 9) return true;// don't process shift key and such
+if (code == 32
+|| (code >= 48 && code <= 53)
+|| (code >= 96 && code <= 101))
+{
+if (code >= 96) code-= 48;
+var c= (code == 32) ? 0 : (code - 48);
+this.addHist(this.ati, this.atj);
+this.setState(this.ati,this.atj, c);
+this.showLen();
+this.painting= 1;
+this.paintColor= c;
+this.paintKeyCode= code;
+}
+else
+{
+if (browserEngine == 'Trident' || browserEngine == 'webKit' ||
+browserEngine == 'Tasman')
+{
+if (code == 189) code= 72;
+if (code == 220) code= 86;
+if (code == 191) code= 76;
+}
+else if (browserEngine == 'Gecko' ||
+(browserEngine == 'Presto' && browserVersion >= 9.5))
+{
+if (code == 109) code= 72;
+if (code == 220) code= 86;
+if (code == 191) code= 76;
+}
+else
+{
+if (code == 45 || code == 95) code= 72
+if (code == 92 || code == 124) code= 86;
+if (code == 47 || code == 63) code= 76;
+}
+switch (code)
+{
+case 83:
+if (this.save) this.save.saveGrid();
+break;
+case 85:
+case 90:
+this.undo();
+break;
+case 82:
+this.redo();
+break;
+case 72:
+this.hFill();
+break;
+case 86:
+this.vFill();
+break;
+case 76:
+this.helper(1);
+break;
+case 67:
+this.check();
+break;
+case 37:
+this.arrow(SIDE,-1);
+break;
+case 38:
+this.arrow(TOP,-1);
+break;
+case 39:
+this.arrow(SIDE,1);
+break;
+case 40:
+this.arrow(TOP,1);
+break;
+case 9:
+this.status('Version '+PlayVer+'; '+PBNdraw+' '+DrawVer+'; '
++PBNline+' '+LineVer+';');
+break;
+default:
+return true;
+}
+}
+return dont(e);
+}
+PBN.prototype.keyPress= function(e)
+{
+if (lbox) return true;
+if (!e) e= event;
+var code;
+if (e.which == null)
+code= e.keyCode;
+else if (e.which > 0)
+code= e.which;
+else
+return true;
+if (code < 32) return true;
+var k= String.fromCharCode(code);
+if (' 012345SURVHLCZsurvhlcz|\_-'.indexOf(k) >= 0)
+return dont(e);
+return true;
+}
+PBN.prototype.keyUp= function(e)
+{
+if (!e) e= event;
+var code= e.which ? e.which : e.keyCode;
+if (this.painting && (code == this.paintKeyCode ||
+(browserEngine == 'KHTML' && code == 0)))
+{
+this.painting= 0;
+return dont(e);
+}
+return true;
+}
+PBN.prototype.setState= function(i,j, clr, norowcheck, nocolcheck)
+{
+if (this.bit[i][j] == clr) return;
+if (this.bit[i][j] > 0)
+{ this.nset--; this.cset[this.bit[i][j]]--; }
+if (clr > 0)
+{ this.nset++; this.cset[clr]++; }
+this.bit[i][j]= clr;
+this.draw.setCell(i, j, clr);
+if (!norowcheck) this.lineCheck(SIDE,i,j);
+if (!nocolcheck) this.lineCheck(TOP,j,i);
+if (this.nset == this.ncell && this.save)
+{
+for (d= 0; d < 2; d++)
+for (i= 0; i < this.n[d]; i++) if (this.err[d][i]) return;
+this.painting= 0;
+this.save.saveGrid();
+}
+}
+PBN.prototype.lineCheck= function(d, i, xj)
+{
+var code= this.opt.errcheck ? this.line.check(d,i,xj) : this.doneCheck(d,i);
+if (code == 2) this.grayLine(d, i);
+var newerr= (code == 0);
+if (newerr == this.err[d][i]) return;
+this.err[d][i]= newerr;
+this.draw.setStatus(d, i, i == (d == SIDE ? this.ati : this.atj), newerr);
+}
+PBN.prototype.doneCheck= function(d, i)
+{
+if (d == SIDE)
+{
+for (var j= 0; j < this.n[TOP]; j++)
+if (this.bit[i][j] == 0) return 1;
+}
+else
+{
+for (var j= 0; j < this.n[SIDE]; j++)
+if (this.bit[j][i] == 0) return 1;
+}
+return 2;
+}
+PBN.prototype.allCheck= function()
+{
+for (var d= 0; d < 2; d++)
+for (var i= 0; i < pbn.n[d]; i++)
+this.lineCheck(d,i,0);
+}
+PBN.prototype.grayLine= function(d,i)
+{
+var clue;
+for (var j= 0; j < this.clue[d][i].length; j++)
+if (this.draw.markClueDIJ(d,i,j, 2))
+this.clueHistDIJ(true, d,i,j);
+}
+PBN.prototype.showLen= function()
+{
+var n,c;
+if (this.ati < 0 || this.atj < 0) return;
+if ((c= this.bit[this.ati][this.atj]) < 2) return;
+n= 1;
+for (var i= this.ati-1; i >=0 && this.bit[i][this.atj]==c; i--)
+n++;
+for (var i= this.ati+1; i < this.n[SIDE] && this.bit[i][this.atj]==c; i++)
+n++;
+this.draw.setCount(TOP, this.atj, n,c);
+n= 1;
+for (var j= this.atj-1; j >=0 && this.bit[this.ati][j]==c; j--)
+n++;
+for (var j= this.atj+1; j < this.n[TOP] && this.bit[this.ati][j]==c; j++)
+n++;
+this.draw.setCount(SIDE, this.ati, n,c);
+this.counton= true;
+}
+PBN.prototype.noLen= function()
+{
+if (this.ati >= 0) this.draw.noCount(SIDE, this.ati);
+if (this.atj >= 0) this.draw.noCount(TOP, this.atj);
+this.counton= false;
+}
+PBN.slack= function(clue,n)
+{
+var cnt= 0;
+for (var i= 0; i < clue.length; i++)
+{
+cnt+= clue[i].n > 0 ? clue[i].n : 1;
+if (i > 0 && clue[i].c == clue[i-1].c) cnt++;
+}
+return n-cnt;
+}
+PBN.prototype.arrow= function(d,inc)
+{
+this.moveClues(d, this.draw.r[d], this.cluepos[d]+inc);
+}
+PBN.prototype.moveClues= function(d,div,pos)
+{
+if (pos > 3) pos= 3; else if (pos < 0) pos= 0;
+var old= this.cluepos[d];
+if ((old < 2 && pos > 1) || (old > 1 && pos < 2))
+this.draw.shiftClues(d, 3);
+if ((old % 2) != (pos % 2))
+this.draw.flipClues(div, d);
+this.cluepos[d]= pos;
+}
+PBN.prototype.addHist= function(i, j)
+{
+var oldstate= this.bit[i][j];
+if (this.hi == 0 || this.hist[this.hi-1].length != 3 ||
+this.hist[this.hi-1][1] != i ||
+this.hist[this.hi-1][2] != j)
+this.hist[this.hi++]= [oldstate,i,j];
+return oldstate;
+}
+PBN.prototype.clueHistDIJ= function(mark, d,i,j)
+{
+this.hist[this.hi++]= [mark, d,i,j];
+}
+PBN.prototype.clueHist= function(mark, id)
+{
+var d= id.charAt(1)=='s' ? SIDE:TOP;
+var coord= id.match(/\d+/g);
+var i= coord[0]-0;
+var j= coord[1]-0;
+this.clueHistDIJ(mark, d,i,j);
+}
+PBN.prototype.undo= function()
+{
+while (this.hi > 0 && this.hist[this.hi-1].length == 4)
+{
+this.hi--;
+var h= this.hist[this.hi];
+this.draw.markClueDIJ(h[1],h[2],h[3], h[0] ? 1 : 2);
+}
+if (this.hi == 0 || this.hist[--this.hi] == null) return;
+var h= this.hist[this.hi];
+var old= this.bit[h[1]][h[2]];
+this.setState(h[1],h[2], h[0]);
+this.showLen();
+this.hist[this.hi][0]= old;
+}
+PBN.prototype.redo= function()
+{
+if (this.hi < this.hist.length && this.hist[this.hi] != null)
+{
+var h= this.hist[this.hi];
+var old= this.bit[h[1]][h[2]];
+this.setState(h[1],h[2], h[0]);
+this.showLen();
+this.hist[this.hi++][0]= old;
+}
+while (this.hi < this.hist.length && this.hist[this.hi] != null &&
+this.hist[this.hi].length == 4)
+{
+var h= this.hist[this.hi];
+this.draw.markClueDIJ(h[1],h[2],h[3], h[0] ? 2 : 1);
+this.hi++;
+}
+}
+PBN.prototype.clearBoard= function()
+{
+if (!confirm("Really erase all marks on puzzle board?"))
+return;
+for (var i= 0; i < this.n[SIDE]; i++)
+{
+for (var j= 0; j < this.n[TOP]; j++)
+if (this.bit[i][j] != 0)
+this.draw.setCell(i,j, this.bit[i][j]= 0);
+this.err[SIDE][i]= false;
+this.draw.setStatus(SIDE, i, this.ati == i, false);
+}
+for (var j= 0; j < this.n[TOP]; j++)
+{
+this.err[TOP][j]= false;
+this.draw.setStatus(TOP, j, this.atj == j, false);
+}
+this.nset= 0;
+for (var clr= 1; clr <= PBN.nclr; clr++)
+this.cset[clr]= 0;
+this.hist.length= this.hi= 0;
+this.ungray();
+}
+PBN.prototype.regray= function()
+{
+for (var i= 0; i < this.hi; i++)
+if (this.hist[i].length == 4)
+{
+var h= this.hist[i];
+this.draw.markClueDIJ(h[1],h[2],h[3], h[0] ? 2 : 1);
+}
+}
+PBN.prototype.ungray= function()
+{
+for (var d= 0; d < 2; d++)
+for (var i= 0; i < this.clue[d].length; i++)
+for (var j= 0; j < this.clue[d][i].length; j++)
+this.draw.markClueDIJ(d,i,j, 1);
+}
+PBN.prototype.hFill= function()
+{
+var minj, maxj, color;
+if (this.bit[this.ati][this.atj] != 0) return;
+for (minj= this.atj - 1; minj >= 0 && this.bit[this.ati][minj] == 0; minj--)
+;
+for (maxj= this.atj + 1;
+maxj < this.n[TOP] && this.bit[this.ati][maxj] == 0;
+maxj++)
+;
+if (minj < 0)
+{
+if (maxj >= this.n[TOP])
+{
+if (this.clue[SIDE][this.ati].length == 1 &&
+this.clue[SIDE][this.ati][0].n == this.n[TOP])
+color= this.clue[SIDE][this.ati][0].c;
+else if (this.clue[SIDE][this.ati].length == 0)
+color= 1;
+else
+return;
+}
+else
+color= this.bit[this.ati][maxj];
+}
+else
+{
+color= this.bit[this.ati][minj];
+if (maxj < this.n[TOP] && color != this.bit[this.ati][maxj]) return;
+}
+for (var j= minj+1; j < maxj; j++)
+{
+this.addHist(this.ati,j);
+this.setState(this.ati,j, color, 1,0);
+}
+this.lineCheck(SIDE,this.ati,minj);
+this.showLen();
+}
+PBN.prototype.vFill= function()
+{
+var mini, maxi, color;
+if (this.bit[this.ati][this.atj] != 0) return;
+for (mini= this.ati - 1; mini >= 0 && this.bit[mini][this.atj] == 0; mini--)
+;
+for (maxi= this.ati + 1;
+maxi < this.n[SIDE] && this.bit[maxi][this.atj] == 0;
+maxi++)
+;
+if (mini < 0)
+{
+if (maxi >= this.n[SIDE])
+{
+if (this.clue[TOP][this.atj].length == 1 &&
+this.clue[TOP][this.atj][0].n == this.n[SIDE])
+color= this.clue[TOP][this.atj][0].c;
+else if (this.clue[TOP][this.atj].length == 0)
+color= 1;
+else
+return;
+}
+else
+color= this.bit[maxi][this.atj];
+}
+else
+{
+color= this.bit[mini][this.atj];
+if (maxi < this.n[SIDE] && color != this.bit[maxi][this.atj]) return;
+}
+for (var i= mini+1; i < maxi; i++)
+{
+this.addHist(i,this.atj);
+this.setState(i,this.atj, color, 0,1);
+}
+this.lineCheck(TOP,this.atj,mini);
+this.showLen();
+}
+PBN.haveSave= 0;
+PBN.toLoad= new Array();
+PBN.prototype.initLoad= function()
+{
+switch (PBN.haveSave)
+{
+case 0:
+PBN.toLoad.push(this);
+loadcode('jsz/save_01290.js');
+PBN.haveSave= 1;
+break;
+case 1:
+PBN.toLoad.push(this);
+break;
+case 2:
+this.save= new Save(this);
+this.save.loadSaved();
+break;
+}
+}
+PBN.saverLoaded= function()
+{
+PBN.haveSave= 2;
+var pbn;
+while ((pbn= PBN.toLoad.pop()) != null)
+{
+pbn.save= new Save(pbn);
+pbn.save.loadSaved();
+}
+}
+PBN.haveHelper= 0;
+PBN.toHelp= new Array();
+PBN.prototype.helper= function(hint)
+{
+switch (PBN.haveHelper)
+{
+case 0:
+PBN.toHelp.push(hint);
+PBN.toHelp.push(this);
+loadcode(LineSolve.helper);
+PBN.haveHelper= 1;
+break;
+case 1:
+PBN.toHelp.push(hint);
+PBN.toHelp.push(this);
+break;
+case 2:
+if (!this.help) this.help= new Helper(this);
+if (hint)
+this.hinter();
+else
+this.help.helper();
+break;
+}
+}
+PBN.helperLoaded= function()
+{
+PBN.haveHelper= 2;
+var pbn, hint;
+while ((pbn= PBN.toHelp.pop()) != null)
+{
+hint= PBN.toHelp.pop();
+if (!pbn.help) pbn.help= new Helper(pbn);
+if (hint)
+pbn.hinter();
+else
+pbn.help.helper();
+}
+}
+PBN.prototype.setMouseFunc= function()
+{
+var nc= [1];
+for (var i= 2; i <= PBN.nclr; i++)
+if (this.usecolor[i])
+nc.push(i);
+if (nc.length == 1) this.usecolor[nc[0]= 2]= true;
+while (nc.length < 3) nc.push(nc[nc.length-1]);
+var aco= [1, 0, 2];
+var aci= 0;
+var f= this.btnfunc[0]= this.opt.btn0 - 0;
+if (f == 3) this.btncolor[0]= 0;
+if (f == 4) this.btncolor[0]= nc[aco[aci++]];
+f= this.btnfunc[2]= this.opt.btn2 - 0;
+if (f == 3) this.btncolor[2]= 0;
+if (f == 4) this.btncolor[2]= nc[aco[aci++]];
+f= this.btnfunc[1]= this.opt.btn1 - 0;
+if (f == 3) this.btncolor[1]= 0;
+if (f == 4) this.btncolor[1]= nc[aco[aci++]];
+}
+PBN.prototype.eyedropper= function(color)
+{
+this.btncolor[0]= color;
+if (this.btnfunc[0] != 3) this.btnfunc[0]= 4;
+if (this.panel) this.panel.ppimg[0].src= this.panel.potImage(0);
+}
+PBN.prototype.hinter= function()
+{
+this.draw.noCount(this.arrowD, this.arrowI);
+for (var d= 0; d < 2; d++)
+{
+var i= this.help.doHint(d);
+if (i >= 0)
+{
+this.draw.setArrow(d,i);
+this.arrowD= d;
+this.arrowI= i;
+return;
+}
+}
+this.status('No hint available');
+}
+PBN.prototype.stringify= function()
+{
+var grid= '';
+for (var i= 0; i < this.n[SIDE]; i++)
+{
+for (var j= 0; j < this.n[TOP]; j++)
+grid+= PBN.xclr[this.bit[i][j]];
+grid+= '%0A';
+}
+return grid;
+}
+PBN.prototype.check= function()
+{
+if (this.soln)
+this.doCheck();
+else
+HTTP('XMLpeek.cgi', 'id='+this.id+'&version='+this.version,
+true, function(req){pbn.gotSoln(req);});
+}
+PBN.prototype.gotSoln= function(req)
+{
+var rstat, m;
+try {rstat= req.status} catch(e){rstat= 200;};
+if (rstat == 200)
+{
+var grid= getXML(req,'grid');
+var i=-1, j=0, k, ch;
+this.soln= [];
+for (k= 0; k < grid.length; k++)
+{
+ch= grid.charAt(k);
+if (ch == '\n')
+{
+i++;
+j= 0;
+this.soln[i]= [];
+}
+else
+this.soln[i][j++]= PBN.clrx[ch];
+}
+this.doCheck();
+}
+}
+PBN.prototype.doCheck= function()
+{
+var nerr= 0;
+for (var i= 0; i < pbn.n[SIDE]; i++)
+for (var j= 0; j < pbn.n[TOP]; j++)
+if (this.bit[i][j] != 0 && this.bit[i][j] != this.soln[i][j])
+nerr++;
+if (nerr == 0)
+{
+this.status('Solution OK so far...');
+this.delayClear(5000);
+}
+else
+{
+var firstbug= this.lastGood(nerr);
+if (firstbug < 0)
+{
+alert('There are errors in your solution');
+}
+else if (confirm('There are errors in your solution.\n\nUndo to first error?'))
+{
+while (this.hi > firstbug)
+this.undo();
+}
+}
+}
+PBN.prototype.lastGood= function(nerr)
+{
+var tmp= [];
+for (var i= 0; i < pbn.n[SIDE]; i++)
+{
+tmp[i]= [];
+for (var j= 0; j < pbn.n[TOP]; j++)
+tmp[i][j]= this.bit[i][j]
+}
+var overh= -1;
+for (var h= this.hi - 1; h >= 0; h--)
+{
+if (this.hist[h].length != 3) continue;
+var i= this.hist[h][1];
+var j= this.hist[h][2];
+var isOK= (this.bit[i][j] == 0 || tmp[i][j] == this.soln[i][j]);
+var wasOK= (this.hist[h][0] == 0 || tmp[i][j] == this.hist[h][0]);
+if (isOK && !wasOK) nerr++;
+if (!isOK && wasOK) nerr--;
+if (nerr == 0)
+{
+if (!this.opt.overshoot || h == 0) return h;
+if (overh < 0)
+{
+var ov= (h > 7 ? 7 : h - 1);
+ov= h - Math.floor(Math.random()*ov);
+overh= h;
+}
+else if (h <= ov)
+return h;
+else
+overh= h;
+}
+else if (overh >= 0 && h <=ov)
+return overh;
+tmp[i][j]= this.hist[i][0];
+}
+return (overh >= 0) ? overh : -1;
+}
+PBN.clueText= function(clue)
+{
+return PBN.huename[clue.c]+(clue.n == 0 ? ' blot' : ' '+clue.n);
+}
+/* Web Paint-by-Number - (c) 2009, Jan Wolter - all rights reserved */
+function Tip(tipbox)
+{
+this.tipbox= tipbox;
+}
+Tip.list= [
+[
+'Paint-By-Number Puzzles',
+'The image above is a paint-by-number puzzle.  Your goal is to discover a ' +
+'hidden picture by filling in the grid cells in a way that agrees with ' +
+'the clue numbers along the side and top. ' +
+'You fill in cells by clicking on them.  One click makes a dot appear, ' +
+'marking the cell as definitely being white.  Click again and another ' +
+'color appears.'
+],
+[
+'Clues',
+"Each row and column of the puzzle has some clue numbers beside it.  A " +
+'clue like "<strong>3 4 12</strong>" would mean that that line must contain ' +
+"first a block of three black cells, then a block of four black cells, and " +
+"then a block of 12 black cells.  There must always be at least one white " +
+"cell between any two blocks of the same color.  There may or may not be " +
+"some white cells at the beginning and ending of a line."
+],
+[
+'Clue Example',
+"Suppose we had the clue <strong>3 2</strong> in a row of " +
+"length 10.  Either of following would be possible: <center>"+
+"<img src='img/tip/sample_2.png'><p><img src='img/tip/sample_1.png'>" +
+"</center>Quite a few other arrangements are possible.  We know the " +
+"sizes and order of the two blocks, but we need to figure out where the " +
+"whites go."
+],
+[
+'Color Clues',
+"Not all puzzles are black and white.  Some have multiple colors.  A clue " +
+'like "<strong><font color="red">3</font> <font color="blue">2</font> ' +
+'<font color="blue">2</font></strong>" means the row contains a block of 3 ' +
+'red cells followed by two blocks of 2 blue cells. ' +
+'<strong>There does not have to be ' +
+"a white cell between two blocks of different colors.</strong>  So there " +
+"would need to be a white cell between the two blue blocks, " +
+"but not between the red block and the blue block."
+],
+[
+'Blotted Clues',
+'Some puzzles have some clue numbers blotted out with a square like '+
+'<img src="1/g/0.gif"> or <img src="1/r/0.gif">. This means that ' +
+'the puzzle designer has censored some of the clues to make the puzzle ' +
+'more challenging to solve. You know the color of the clue number from the ' +
+'color of the blot, but you don\'t know the value, except that it must be at ' +
+'least one.'
+],
+[
+'Line Solving',
+"The usual method of solving paint-by-number puzzles is to start by looking " +
+"for rows or columns with many clue numbers or large clue numbers.  You may " +
+"be able to mark some cells in such rows.  For example, in the row below, " +
+"the three cells shown can be marked black:" +
+"<center><img src='img/tip/sample_3.png'></center>" +
+"A good way to see this is to think about the left-most and right-most " +
+"possible positions of the cells and how they overlap.  Next check crossing " +
+"rows or columns."
+],
+[
+'Advanced Solving',
+"Line solving is by far the most important solution technique for these " +
+"puzzles, but many of the more difficult puzzles on this site cannot be " +
+"solved by that method alone.  To learn about some of the other methods " +
+'that can be used, see the <a target="_blank" href="solving.cgi">Advanced ' +
+"Puzzle Solving Techniques</a> page on this site."
+],
+[
+'Red Balls',
+"As you work on solving a puzzle, you may notice red balls appearing next " +
+"to some of the clues.  This indicates that the markings you currently have " +
+"in that line are not consistent with the clue.  You need to back up and fix "+
+"something.<p>If you don't want red balls, you can turn them off with the " +
+'"Options" button.  It may be necessary to do this on large puzzles, where ' +
+"the error checking to generate the redballs can get very slow."
+],
+[
+'Mouse Button Functions',
+"The mouse function button looks like this:" +
+"<center><img src='img/tip/func_button.png'></center>" +
+"The three icons on it represent the functions currently assigned to " +
+"your left, middle, and right mouse buttons. " +
+"You can click on them to change them. " +
+"Not all computers have three mouse buttons (if you have a scroll wheel, " +
+"that's a middle mouse button), and not all browsers " +
+"will let you use them, so CTRL-CLICK works as a " +
+"middle-click and SHIFT-CLICK works as a right-click."
+],
+[
+'Mouse Button Functions: Cycling',
+"The forward and backward cycling mouse functions are represented by the " +
+"<img src='img/bf_rot.gif'> and " +
+"<img src='img/bf_tor.gif'> icons. " +
+"When you click on a cell with the cycling function, it just changes it to " +
+"the next possible state:  from unknown, to white, to black, to red, " +
+"to green, to blue, and back to unknown, skipping any colors not in the " +
+"puzzle.  The reverse cycling function goes through the same cycle of colors " +
+"in reverse."
+],
+[
+'Mouse Button Functions: Painting',
+"The painting mouse functions are represented by balls of the color being " +
+"painted with: "+
+"<img src='img/bf_dot.gif'> " +
+"<img src='img/bf_g.gif'> " +
+"<img src='img/bf_r.gif'> " +
+"<img src='img/bf_n.gif'> " +
+"<img src='img/bf_u.gif'> and " +
+"<img src='img/bf_w.gif'>." +
+"When you click on a cell with the painting function, it just changes it to " +
+"that color, unless it already is that color, in which case it set the cell " +
+"to unknown.  You can assign a different color to each mouse button and " +
+"solve puzzles with only a few colors very nicely this way."
+],
+[
+'Mouse Button Functions: Color Picker',
+"The color picker function can only be assigned to the right or middle mouse " +
+"buttons.  It's icon is a little eyedropper, like this: "+
+"<img src='img/bf_drop.gif'>. " +
+"When you use a button assigned to this function to click on a cell or a " +
+"clue number, the right mouse button's function will be set to paint with " +
+"the color of that cell or clue number.  This can be a quick way to switch " +
+"between colors, and can be helpful if you are having a hard time telling " +
+"clue colors apart.  Clicking on unknown cells or the blank cells around " +
+"the clues sets the paint color to white."
+],
+[
+'Mouse Button Functions: Color Menu',
+"The color menu function can also only be assigned to the right or middle " +
+"mouse buttons and also assigns a paint color to the right mouse button, " +
+"but it pops up a little menu of colors you can choose from. "+
+"It's icon looks like this: "+
+"<img src='img/bf_menu.gif'>."
+],
+[
+'Painting by Numbers',
+"Another way to fill in cells is to move the mouse over a cell and then " +
+"type one of the number keys on your keyboard.  The cell will be set to a " +
+"color corresponding to that key:<blockquote><table>" +
+'<tr><td>space or "0"</td><td>unknown&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>' +
+'<td>"3"</td><td>red</td></tr>' +
+'<tr><td align="right">"1"</td><td>white</td>' +
+'<td>"4"</td><td>green</td></tr>' +
+'<tr><td align="right">"2"</td><td>black</td>' +
+'<td>"5"</td><td>blue</td></tr></table></blockquote>' +
+"This is the same order that colors cycle in with the cycle function."
+],
+[
+'Undoing and Redoing',
+'If you make a mistake, you may want to back up.  The "Undo" button undoes ' +
+"the color settings you have done, one cell at a time.  If you decided you " +
+'undid too much, "Redo" restores them, one cell at a time.' +
+'Typing the "U" or "R" keys on your keyboard is an alternative way to undo ' +
+'or redo.  The "Z" key also does an undo.'
+],
+[
+'Filling Lines',
+'The "H" and "V" keys provide a quick way to fill in long lines with a '+
+'single color.  Suppose you want to fill in a horizontal line of cells ' +
+'between cells A and B with black.  You\'d first set the two cells A and B '+
+'to black in the usual way, then you\'d move your mouse to any unset cell '+
+'anywhere between them and hit the "H" key on your keyboard to do a ' +
+'horizontal fill.  It will fill in all the cells between the two ends you '+
+'marked with the color of those two ends.  The "V" key does the same thing '+
+'vertically.  You can also fill between one point and the edge of the grid. '+
+'If there is a line that is all one color (either it has no clue and is all '+
+'white, or it has a clue equal to the length of the line), then you can fill '+
+'in the whole line with "H" or "V" without needing to set any endpoints.'
+],
+[
+'Bigger and Smaller',
+'Webpbn will normally try to draw the puzzle as large as it can be and still ' +
+'fit in your browser window, but you can change the size with the "Bigger" ' +
+'and "Smaller" buttons.  On large puzzles, scaling the puzzle may take a few '+
+'seconds.'
+],
+[
+'Moving the Clues',
+'Normally paint-by-number puzzles are drawn with the clues on the top and ' +
+'left.  But sometimes, especially on large puzzles, it can be handy to move ' +
+'the clues to the bottom or right sides.  To move them, just hit one of the ' +
+'four arrow keys on your keyboard.  For example, hitting the right arrow once '+
+'will move the side clues to the right side.  Hitting it again will right '+
+'justify the clues.'
+],
+[
+'Marking Clue Numbers',
+'When you completely solve a row or a column, webpbn will automatically ' +
+'gray out the clue numbers for that row and column.  You can also click ' +
+'on clue numbers to gray them out.  People do this on large puzzles to ' +
+'mark off clue numbers for blocks that they have solved.  This makes it ' +
+'easier to keep track of which ones you still need to work on.'
+],
+[
+'Saving',
+'When you fill in the last cell, your solution will automatically be saved ' +
+'the webpbn server.  You can also save at any previous time by hitting the ' +
+'"Save" button or typing the "S" key.  You\'ll be able to load it later, ' +
+'even from a different computer.  It\'s smart to save occasionally if you ' +
+'are working on a big puzzle, to protect you from browser crashes.  You can ' +
+'also save to establish a check point.  The "Revert" button will restore ' +
+'your puzzle to the last version you saved.  You must be logged into webpbn ' +
+'to be able to save and revert.'
+],
+[
+'Printing',
+'Depending on your computer and browser, you may be able to print puzzles ' +
+'just by using your computer\'s screen print function or the browser\'s ' +
+'"Print" command. '+
+'The "Print" button on the webpbn control panel generates a PDF file with ' +
+'an image of the unsolved puzzle.  This is nice for people who prefer solving '+
+'puzzle the old-fashioned way, with pen and paper.'
+],
+[
+'Rating Puzzles: Quality and Difficulty',
+'When you finish solving a puzzle, we\'d appreciate if you tell us what you '+
+'think about it.  You can enter your ratings on the "quality" and ' +
+'"difficulty" selections below the puzzle.  Quality is not just about how '+
+'pretty the picture is, but about how much fun the whole solving experience '+
+'is.  Difficulty rates how hard it is to solve the puzzle, compared to other '+
+'puzzles of the same size'
+],
+[
+'Rating Puzzles: Uniqueness',
+'Sometimes you\'ll also be asked to rate a puzzle for uniqueness. ' +
+'Occasionally people create puzzles where there is more than ' +
+'one solution that agrees the clues.  Such puzzles always need guessing to ' +
+'solve, but some people still enjoy them, so they are not usually removed ' +
+'from webpbn.  Most such puzzles are marked by an automated checker, but ' +
+'sometimes the checker can\'t tell and it\'s up to the users to figure it ' +
+'out.  In such cases, if you find and save an alternate solution, webpbn ' +
+'will automatically mark the puzzle.'
+],
+[
+'Rating Puzzles: Solvability',
+'Sometimes you\'ll also be asked to rate a puzzle for solvability. ' +
+'Is guessing required to solve the problem, or can it be solved by logic ' +
+'alone?  This distinction is a bit fuzzy, but basically we call a puzzle ' +
+'logically solvable if you could solve it on paper with an ink pen, always ' +
+'sure that every cell you mark is correct, never having to undo any guesses ' +
+'that led to errors.  Alternately, you could say that it means being able to '+
+'solve the puzzle using methods like those described on the ' +
+'<a target="_blank" href="solving.cgi">Advanced Puzzle Solving Techniques</a> '+
+'page.'
+],
+[
+'Comments',
+'The webpbn site includes a discussion forum with a thread to discuss every '+
+'puzzle.  The "Comments" button will bring up the discussion thread for the '+
+'puzzle.  Comments that contains hints (clues on solving the puzzle) or '+
+'spoilers (references to what the picture is) will normally only be shown '+
+'if you have solved the puzzle, but you can see them with a click if you '+
+'haven\'t.'
+],
+[
+'Helper',
+'If you are solving a puzzle that you created, or if you have finished '+
+'solving a puzzle manually, then you will get a "Helper" button.  The helper '+
+'is a very simple AI program that will try to solve the puzzle.  It mainly '+
+'exists to help out people creating puzzles, who often have to test solve the '+
+'puzzle over and over again as they make small adjustments to it.  The '+
+'helper is not terribly smart and will not solve every solvable puzzle, but '+
+'it won\'t do anything an alert human couldn\'t do, so it is good for ' +
+'testing.  If it gets stuck, use your brain to fill in a few more squares, '+
+'and click it again.'
+],
+[
+'Creating Puzzles',
+'All the puzzle on this site were created by users of this site.  Creating '+
+'paint-by-number puzzles is really pretty easy, and this site supplies a good '+
+'set of tools to make it easier.  There is a page available on this site with '+
+'<a target="_blank" href="howto.cgi">advice on creating puzzles</a>.'
+],
+[
+'Final Tip',
+"<center class='huge'><strong>Have Fun!</strong></center><p>&nbsp;"
+]
+];
+var tipPanel= null;
+Tip.prototype.showTip= function(inc)
+{
+var tip= this;
+var box= tip.tipbox;
+if (tip.i == null || (tip.i+= inc) < 0)
+tip.i= 0;
+else if (tip.i >= Tip.list.length)
+tip.i= Tip.list.length-1;
+while (box.firstChild) box.removeChild(box.firstChild);
+box.style.backgroundColor= '#ddd';
+var tbl= document.createElement('TABLE');
+tbl.width= '100%';
+box.appendChild(tbl);
+var tby= document.createElement('TBODY');
+tbl.appendChild(tby);
+var tr= document.createElement('TR');
+tby.appendChild(tr);
+var td= document.createElement('TD');
+td.align= 'left';
+td.appendChild(document.createTextNode(
+'Tip #'+(tip.i+1)+': '+Tip.list[tip.i][0]));
+td.style.fontWeight= 'bold';
+tr.appendChild(td);
+if (!tip.tipPanel)
+{
+tip.tipPanel= document.createElement('TD');
+tip.tipPanel.style.verticalAlign= "top";
+tip.tipPanel.style.textAlign= 'right';
+tip.tipPanel.style.whiteSpace= 'nowrap';
+tip.tipPanel.style.padding= '2px';
+var btn= document.createElement('IMG');
+btn.src= 'img/tip/first.png';
+btn.onclick= function(e){tip.i= null; tip.showTip(0);};
+tip.tipPanel.appendChild(btn);
+tip.tipPanel.appendChild(document.createTextNode('\u00A0'));
+var btn= document.createElement('IMG');
+btn.src= 'img/tip/prev.png';
+btn.onclick= function(e){tip.showTip(-1);};
+tip.tipPanel.appendChild(btn);
+tip.tipPanel.appendChild(document.createTextNode('\u00A0'));
+var btn= document.createElement('IMG');
+btn.src= 'img/tip/next.png';
+btn.onclick= function(e){tip.showTip(1);};
+tip.tipPanel.appendChild(btn);
+tip.tipPanel.appendChild(document.createTextNode('\u00A0'));
+var btn= document.createElement('IMG');
+btn.src= 'img/tip/index.png';
+btn.onclick= function(e){tip.index();};
+tip.tipPanel.appendChild(btn);
+}
+tr.appendChild(tip.tipPanel);
+tr= document.createElement('TR');
+tby.appendChild(tr);
+td= document.createElement('TD');
+td.align= 'left';
+td.colSpan= 2;
+td.innerHTML= Tip.list[tip.i][1];
+tr.appendChild(td);
+}
+Tip.prototype.hideTip= function()
+{
+var box= this.tipbox;
+box.style.backgroundColor= '#fff';
+while (box.firstChild) box.removeChild(box.firstChild);
+}
+Tip.prototype.index= function()
+{
+var tip= this;
+var box= tip.tipbox;
+while (box.firstChild) box.removeChild(box.firstChild);
+var div= document.createElement('CENTER');
+div.padding= "8px";
+box.appendChild(div);
+var form= document.createElement('FORM');
+div.appendChild(form);
+var st= document.createElement('STRONG');
+st.appendChild(document.createTextNode('Select a tip topic:'));
+form.appendChild(st);
+form.appendChild(document.createElement('P'));
+form.onsubmit= function() {tip.selectIndex();};
+if (!tip.isel)
+{
+tip.isel= document.createElement('SELECT');
+tip.isel.name= 'tipno';
+tip.isel.onchange= function() {tip.selectIndex();};
+for (var i= 0; i < Tip.list.length; i++)
+tip.isel.options[i]= new Option('#'+(i+1)+': '+Tip.list[i][0], i);
+}
+form.appendChild(tip.isel);
+var go= document.createElement('INPUT');
+go.type= 'submit';
+go.value= 'Go';
+form.appendChild(go);
+}
+Tip.prototype.selectIndex= function()
+{
+this.i= this.isel.options[this.isel.selectedIndex].value - 0;
+this.showTip(0);
+}

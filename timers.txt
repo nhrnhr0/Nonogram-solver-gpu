@@ -1,0 +1,214 @@
+Filter) arg: 0.002432s  max: 0.057000s  min: 0.000000s
+LargeNumber)    arg: 0.108460s  max: 3.352000s  min: 0.000000s
+all)    arg: 9.285000s  max: 9.285000s  min: 9.285000s
+calcAllPossibilities)   arg: 0.111815s  max: 0.445000s  min: 0.001000s
+jsonReading)    arg: 0.313000s  max: 0.313000s  min: 0.313000s
+
+
+
+
+
+rule: (12 ) pos: 23 recur iteration: 46 num inserted: 23
+rule: (5 2 5 ) pos: 1771 recur iteration: 3794 num inserted: 1771
+rule: (5 2 2 5 ) pos: 5985 recur iteration: 13299 num inserted: 5985
+rule: (1 2 2 2 2 2 1 ) pos: 245157 recur iteration: 591260 num inserted: 245157
+rule: (4 2 2 4 2 2 4 ) pos: 6435 recur iteration: 17874 num inserted: 6435
+rule: (4 2 2 4 2 2 4 ) pos: 6435 recur iteration: 17874 num inserted: 6435
+rule: (1 2 2 2 2 2 1 ) pos: 245157 recur iteration: 591260 num inserted: 245157
+rule: (6 2 2 2 2 2 6 ) pos: 1716 recur iteration: 5147 num inserted: 1716
+rule: (6 2 2 2 2 2 6 ) pos: 1716 recur iteration: 5147 num inserted: 1716
+rule: (1 14 1 ) pos: 969 recur iteration: 2108 num inserted: 969
+rule: (10 10 ) pos: 105 recur iteration: 224 num inserted: 105
+rule: (8 3 3 8 ) pos: 715 recur iteration: 1715 num inserted: 715
+rule: (1 1 2 1 1 2 1 1 ) pos: 1081575 recur iteration: 2643849 num inserted: 1081575
+rule: (9 2 2 2 2 9 ) pos: 84 recur iteration: 293 num inserted: 84
+rule: (9 9 ) pos: 136 recur iteration: 288 num inserted: 136
+rule: (1 1 1 1 1 1 ) pos: 475020 recur iteration: 1068794 num inserted: 475020
+rule: (12 2 12 ) pos: 84 recur iteration: 203 num inserted: 84
+rule: (12 12 ) pos: 55 recur iteration: 120 num inserted: 55
+rule: (1 1 4 1 1 ) pos: 80730 recur iteration: 179009 num inserted: 80730
+rule: (14 14 ) pos: 21 recur iteration: 48 num inserted: 21
+rule: (12 12 ) pos: 55 recur iteration: 120 num inserted: 55
+rule: (2 1 4 1 2 ) pos: 53130 recur iteration: 118909 num inserted: 53130
+rule: (9 4 9 ) pos: 286 recur iteration: 649 num inserted: 286
+rule: (1 7 4 7 1 ) pos: 3003 recur iteration: 7370 num inserted: 3003
+rule: (1 1 1 4 1 1 1 ) pos: 480700 recur iteration: 1138499 num inserted: 480700
+rule: (1 7 4 7 1 ) pos: 3003 recur iteration: 7370 num inserted: 3003
+rule: (1 7 4 7 1 ) pos: 3003 recur iteration: 7370 num inserted: 3003
+rule: (1 2 1 2 1 2 1 ) pos: 480700 recur iteration: 1138499 num inserted: 480700
+rule: (1 7 2 7 1 ) pos: 6188 recur iteration: 14755 num inserted: 6188
+rule: (1 1 6 2 6 1 1 ) pos: 19448 recur iteration: 51271 num inserted: 19448
+rule: (1 1 1 1 2 1 1 1 1 ) pos: 2042975 recur iteration: 5167524 num inserted: 2042975
+rule: (1 1 6 2 6 1 1 ) pos: 19448 recur iteration: 51271 num inserted: 19448
+rule: (1 1 5 5 1 1 ) pos: 54264 recur iteration: 128876 num inserted: 54264
+rule: (1 1 1 8 1 1 1 ) pos: 116280 recur iteration: 286823 num inserted: 116280
+rule: (1 1 4 4 1 1 ) pos: 100947 recur iteration: 235542 num inserted: 100947
+rule: (1 2 6 2 1 ) pos: 33649 recur iteration: 76152 num inserted: 33649
+rule: (2 4 4 2 ) pos: 8855 recur iteration: 19480 num inserted: 8855
+rule: (2 6 2 ) pos: 2300 recur iteration: 4899 num inserted: 2300
+rule: (4 4 ) pos: 351 recur iteration: 728 num inserted: 351
+rule: (6 ) pos: 29 recur iteration: 58 num inserted: 29
+rule: (5 ) pos: 36 recur iteration: 72 num inserted: 36
+rule: (3 2 1 ) pos: 6545 recur iteration: 13684 num inserted: 6545
+rule: (3 2 2 1 ) pos: 40920 recur iteration: 87295 num inserted: 40920
+rule: (3 2 2 2 2 ) pos: 142506 recur iteration: 312416 num inserted: 142506
+rule: (3 2 2 2 2 3 ) pos: 296010 recur iteration: 672749 num inserted: 296010
+rule: (1 2 2 2 2 2 16 ) pos: 3432 recur iteration: 9866 num inserted: 3432
+rule: (1 2 2 2 2 2 2 1 2 ) pos: 2042975 recur iteration: 5167524 num inserted: 2042975
+rule: (1 2 2 2 2 2 2 13 1 ) pos: 2002 recur iteration: 7006 num inserted: 2002
+rule: (3 2 2 2 2 2 2 4 1 1 ) pos: 184756 recur iteration: 537471 num inserted: 184756
+rule: (6 5 2 2 2 2 6 1 1 ) pos: 2002 recur iteration: 7006 num inserted: 2002
+rule: (1 7 3 2 2 2 2 2 1 1 1 ) pos: 12376 recur iteration: 44199 num inserted: 12376
+rule: (3 4 1 2 2 2 2 2 2 1 1 1 ) pos: 18564 recur iteration: 68951 num inserted: 18564
+rule: (6 1 2 3 2 2 2 2 1 1 1 ) pos: 31824 recur iteration: 107405 num inserted: 31824
+rule: (1 7 2 16 1 1 ) pos: 1716 recur iteration: 4718 num inserted: 1716
+rule: (1 4 1 1 1 1 1 1 1 1 1 ) pos: 13037895 recur iteration: 34512074 num inserted: 13037895
+rule: (1 2 1 3 1 1 6 1 1 1 1 ) pos: 705432 recur iteration: 2057509 num inserted: 705432
+rule: (2 7 1 1 11 1 1 1 1 ) pos: 5005 recur iteration: 16444 num inserted: 5005
+rule: (2 7 1 1 11 1 1 1 1 ) pos: 5005 recur iteration: 16444 num inserted: 5005
+rule: (1 2 1 3 1 1 6 1 1 1 1 ) pos: 705432 recur iteration: 2057509 num inserted: 705432
+rule: (1 4 1 1 1 1 1 1 1 1 1 ) pos: 13037895 recur iteration: 34512074 num inserted: 13037895
+rule: (1 7 2 16 1 1 ) pos: 1716 recur iteration: 4718 num inserted: 1716
+rule: (6 1 2 3 2 2 2 2 1 1 1 ) pos: 31824 recur iteration: 107405 num inserted: 31824
+rule: (3 4 1 2 2 2 2 2 2 1 1 1 ) pos: 18564 recur iteration: 68951 num inserted: 18564
+rule: (1 7 3 2 2 2 2 2 1 1 1 ) pos: 12376 recur iteration: 44199 num inserted: 12376
+rule: (6 5 2 2 2 2 6 1 1 ) pos: 2002 recur iteration: 7006 num inserted: 2002
+rule: (3 2 2 2 2 2 2 4 1 1 ) pos: 184756 recur iteration: 537471 num inserted: 184756
+rule: (1 2 2 2 2 2 2 13 1 ) pos: 2002 recur iteration: 7006 num inserted: 2002
+rule: (1 2 2 2 2 2 2 1 2 ) pos: 2042975 recur iteration: 5167524 num inserted: 2042975
+rule: (1 2 2 2 2 2 16 ) pos: 3432 recur iteration: 9866 num inserted: 3432
+rule: (3 2 2 2 2 3 ) pos: 296010 recur iteration: 672749 num inserted: 296010
+rule: (3 2 2 2 2 ) pos: 142506 recur iteration: 312416 num inserted: 142506
+rule: (3 2 2 1 ) pos: 40920 recur iteration: 87295 num inserted: 40920
+rule: (3 2 1 ) pos: 6545 recur iteration: 13684 num inserted: 6545
+rule: (5 ) pos: 36 recur iteration: 72 num inserted: 36
+
+Bigint) arg: 3.036892s  max: 78.455000s min: 0.000000s
+LargeNumber)    arg: 0.133108s  max: 3.529000s  min: 0.000000s
+all)    arg: 2196.813000s       max: 2196.813000s       min: 2196.813000s
+calcAllPossibilities)   arg: 29.673784s max: 736.091000s        min: 0.002000s
+jsonReading)    arg: 0.479000s  max: 0.479000s  min: 0.479000s
+
+
+
+
+
+
+
+
+
+
+
+
+
+rule: (12 ) pos: 23 recur iteration: 47 num inserted: 23
+rule: (5 2 5 ) pos: 1771 recur iteration: 4359 num inserted: 1771
+rule: (5 2 2 5 ) pos: 5985 recur iteration: 17987 num inserted: 5985
+
+rule: (12 ) pos: 23 recur iteration: 47 num inserted: 23
+rule: (5 2 5 ) pos: 1771 recur iteration: 4047 num inserted: 1771
+rule: (5 2 2 5 ) pos: 5985 recur iteration: 14629 num inserted: 5985
+
+rule: (12 ) pos: 23 recur iteration: 46 num inserted: 23
+rule: (5 2 5 ) pos: 1771 recur iteration: 3794 num inserted: 1771
+rule: (5 2 2 5 ) pos: 5985 recur iteration: 13299 num inserted: 5985
+
+
+rule: (12 ) pos: 23 recur iteration: 46 num inserted: 23
+rule: (5 2 5 ) pos: 1771 recur iteration: 3794 num inserted: 1771
+rule: (5 2 2 5 ) pos: 5985 recur iteration: 13299 num inserted: 5985
+rule: (4 2 2 4 2 2 4 ) pos: 6435 recur iteration: 17874 num inserted: 6435
+rule: (4 2 2 4 2 2 4 ) pos: 6435 recur iteration: 17874 num inserted: 6435
+rule: (6 2 2 2 2 2 6 ) pos: 1716 recur iteration: 5147 num inserted: 1716
+rule: (6 2 2 2 2 2 6 ) pos: 1716 recur iteration: 5147 num inserted: 1716
+rule: (1 14 1 ) pos: 969 recur iteration: 2108 num inserted: 969
+rule: (10 10 ) pos: 105 recur iteration: 224 num inserted: 105
+rule: (8 3 3 8 ) pos: 715 recur iteration: 1715 num inserted: 715
+rule: (9 2 2 2 2 9 ) pos: 84 recur iteration: 293 num inserted: 84
+rule: (9 9 ) pos: 136 recur iteration: 288 num inserted: 136
+rule: (12 2 12 ) pos: 84 recur iteration: 203 num inserted: 84
+rule: (12 12 ) pos: 55 recur iteration: 120 num inserted: 55
+rule: (14 14 ) pos: 21 recur iteration: 48 num inserted: 21
+rule: (12 12 ) pos: 55 recur iteration: 120 num inserted: 55
+rule: (9 4 9 ) pos: 286 recur iteration: 649 num inserted: 286
+rule: (1 7 4 7 1 ) pos: 3003 recur iteration: 7370 num inserted: 3003
+rule: (1 7 4 7 1 ) pos: 3003 recur iteration: 7370 num inserted: 3003
+rule: (1 7 4 7 1 ) pos: 3003 recur iteration: 7370 num inserted: 3003
+rule: (1 7 2 7 1 ) pos: 6188 recur iteration: 14755 num inserted: 6188
+rule: (2 4 4 2 ) pos: 8855 recur iteration: 19480 num inserted: 8855
+rule: (2 6 2 ) pos: 2300 recur iteration: 4899 num inserted: 2300
+rule: (4 4 ) pos: 351 recur iteration: 728 num inserted: 351
+rule: (6 ) pos: 29 recur iteration: 58 num inserted: 29
+rule: (5 ) pos: 36 recur iteration: 72 num inserted: 36
+rule: (3 2 1 ) pos: 6545 recur iteration: 13684 num inserted: 6545
+rule: (1 2 2 2 2 2 16 ) pos: 3432 recur iteration: 9866 num inserted: 3432
+rule: (1 2 2 2 2 2 2 13 1 ) pos: 2002 recur iteration: 7006 num inserted: 2002
+rule: (6 5 2 2 2 2 6 1 1 ) pos: 2002 recur iteration: 7006 num inserted: 2002
+rule: (1 7 2 16 1 1 ) pos: 1716 recur iteration: 4718 num inserted: 1716
+rule: (2 7 1 1 11 1 1 1 1 ) pos: 5005 recur iteration: 16444 num inserted: 5005
+rule: (2 7 1 1 11 1 1 1 1 ) pos: 5005 recur iteration: 16444 num inserted: 5005
+rule: (1 7 2 16 1 1 ) pos: 1716 recur iteration: 4718 num inserted: 1716
+rule: (6 5 2 2 2 2 6 1 1 ) pos: 2002 recur iteration: 7006 num inserted: 2002
+rule: (1 2 2 2 2 2 2 13 1 ) pos: 2002 recur iteration: 7006 num inserted: 2002
+rule: (1 2 2 2 2 2 16 ) pos: 3432 recur iteration: 9866 num inserted: 3432
+rule: (3 2 1 ) pos: 6545 recur iteration: 13684 num inserted: 6545
+rule: (5 ) pos: 36 recur iteration: 72 num inserted: 36
+all) arg: 47.420000s max: 47.420000s min: 47.420000s
+calcAllPossibilities) arg: 0.945718s max: 3.328000s min: 0.010000s
+jsonReading) arg: 0.369000s max: 0.369000s min: 0.369000s
+
+
+
+
+
+
+
+
+
+
+
+rule: (12 ) pos: 23 recur iteration: 46 num inserted: 23
+rule: (5 2 5 ) pos: 1771 recur iteration: 3794 num inserted: 1771
+rule: (5 2 2 5 ) pos: 5985 recur iteration: 13299 num inserted: 5985
+rule: (4 2 2 4 2 2 4 ) pos: 6435 recur iteration: 17874 num inserted: 6435
+rule: (4 2 2 4 2 2 4 ) pos: 6435 recur iteration: 17874 num inserted: 6435
+rule: (6 2 2 2 2 2 6 ) pos: 1716 recur iteration: 5147 num inserted: 1716
+rule: (6 2 2 2 2 2 6 ) pos: 1716 recur iteration: 5147 num inserted: 1716
+rule: (1 14 1 ) pos: 969 recur iteration: 2108 num inserted: 969
+rule: (10 10 ) pos: 105 recur iteration: 224 num inserted: 105
+rule: (8 3 3 8 ) pos: 715 recur iteration: 1715 num inserted: 715
+rule: (9 2 2 2 2 9 ) pos: 84 recur iteration: 293 num inserted: 84
+rule: (9 9 ) pos: 136 recur iteration: 288 num inserted: 136
+rule: (12 2 12 ) pos: 84 recur iteration: 203 num inserted: 84
+rule: (12 12 ) pos: 55 recur iteration: 120 num inserted: 55
+rule: (14 14 ) pos: 21 recur iteration: 48 num inserted: 21
+rule: (12 12 ) pos: 55 recur iteration: 120 num inserted: 55
+rule: (9 4 9 ) pos: 286 recur iteration: 649 num inserted: 286
+rule: (1 7 4 7 1 ) pos: 3003 recur iteration: 7370 num inserted: 3003
+rule: (1 7 4 7 1 ) pos: 3003 recur iteration: 7370 num inserted: 3003
+rule: (1 7 4 7 1 ) pos: 3003 recur iteration: 7370 num inserted: 3003
+rule: (1 7 2 7 1 ) pos: 6188 recur iteration: 14755 num inserted: 6188
+rule: (2 4 4 2 ) pos: 8855 recur iteration: 19480 num inserted: 8855
+rule: (2 6 2 ) pos: 2300 recur iteration: 4899 num inserted: 2300
+rule: (4 4 ) pos: 351 recur iteration: 728 num inserted: 351
+rule: (6 ) pos: 29 recur iteration: 58 num inserted: 29
+rule: (5 ) pos: 36 recur iteration: 72 num inserted: 36
+rule: (3 2 1 ) pos: 6545 recur iteration: 13684 num inserted: 6545
+rule: (1 2 2 2 2 2 16 ) pos: 3432 recur iteration: 9866 num inserted: 3432
+rule: (1 2 2 2 2 2 2 13 1 ) pos: 2002 recur iteration: 7006 num inserted: 2002
+rule: (6 5 2 2 2 2 6 1 1 ) pos: 2002 recur iteration: 7006 num inserted: 2002
+rule: (1 7 2 16 1 1 ) pos: 1716 recur iteration: 4718 num inserted: 1716
+rule: (2 7 1 1 11 1 1 1 1 ) pos: 5005 recur iteration: 16444 num inserted: 5005
+rule: (2 7 1 1 11 1 1 1 1 ) pos: 5005 recur iteration: 16444 num inserted: 5005
+rule: (1 7 2 16 1 1 ) pos: 1716 recur iteration: 4718 num inserted: 1716
+rule: (6 5 2 2 2 2 6 1 1 ) pos: 2002 recur iteration: 7006 num inserted: 2002
+rule: (1 2 2 2 2 2 2 13 1 ) pos: 2002 recur iteration: 7006 num inserted: 2002
+rule: (1 2 2 2 2 2 16 ) pos: 3432 recur iteration: 9866 num inserted: 3432
+rule: (3 2 1 ) pos: 6545 recur iteration: 13684 num inserted: 6545
+rule: (5 ) pos: 36 recur iteration: 72 num inserted: 36
+all) arg: 36.554000s max: 36.554000s min: 36.554000s
+calcAllPossibilities) arg: 0.866026s max: 3.193000s min: 0.009000s
+jsonReading) arg: 0.358000s max: 0.358000s min: 0.358000s
+
+
+
